@@ -144,7 +144,7 @@ public class SkyWalkingAgent {
         } catch (Exception e) {
             LOGGER.error(e, "Skywalking agent boot failure.");
         }
-        //Cat.addCatJar();
+        Cat.addCatJar();
         Runtime.getRuntime()
                 .addShutdownHook(new Thread(ServiceManager.INSTANCE::shutdown, "skywalking service shutdown thread"));
     }
