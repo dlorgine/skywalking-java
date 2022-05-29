@@ -178,6 +178,8 @@ public class Config {
          * Private key file. If ssl_cert_chain and ssl_key exist, will enable mTLS for gRPC channel.
          */
         public static String SSL_KEY_PATH;
+        public static String CLASS_LOADER_NAME = "LaunchedURLClassLoader";
+
     }
 
     public static class OsInfo {
@@ -300,7 +302,7 @@ public class Config {
          * <p>
          * Ref to {@link WriterFactory#getLogWriter()}
          */
-        public static String DIR = "";
+        public static String DIR = "/tmp";
 
         /**
          * The max size of log file. If the size is bigger than this, archive the current file, and write into a new

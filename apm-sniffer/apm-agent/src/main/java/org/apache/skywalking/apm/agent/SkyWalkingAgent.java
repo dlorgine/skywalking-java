@@ -18,11 +18,16 @@
 
 package org.apache.skywalking.apm.agent;
 
+import java.io.File;
 import java.lang.instrument.Instrumentation;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import java.util.jar.JarFile;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.description.NamedElement;
@@ -33,6 +38,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.utility.JavaModule;
 import org.apache.skywalking.apm.agent.core.boot.AgentPackageNotFoundException;
+import org.apache.skywalking.apm.agent.core.boot.AgentPackagePath;
 import org.apache.skywalking.apm.agent.core.boot.ServiceManager;
 import org.apache.skywalking.apm.agent.core.conf.Config;
 import org.apache.skywalking.apm.agent.core.conf.SnifferConfigInitializer;
@@ -58,12 +64,13 @@ import static net.bytebuddy.matcher.ElementMatchers.not;
  */
 public class SkyWalkingAgent {
     private static ILog LOGGER = LogManager.getLogger(SkyWalkingAgent.class);
-
+    private static  Instrumentation instrumentation1;
     /**
      * Main entrance. Use byte-buddy transform to enhance all classes, which define in plugins.
      */
     public static void premain(String agentArgs, Instrumentation instrumentation) throws PluginException {
         final PluginFinder pluginFinder;
+        instrumentation1=instrumentation;
         try {
             SnifferConfigInitializer.initializeCoreConfig(agentArgs);
         } catch (Exception e) {
@@ -124,11 +131,11 @@ public class SkyWalkingAgent {
         }
 
         agentBuilder.type(pluginFinder.buildMatch())
-                    .transform(new Transformer(pluginFinder))
-                    .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
-                    .with(new RedefinitionListener())
-                    .with(new Listener())
-                    .installOn(instrumentation);
+                .transform(new Transformer(pluginFinder))
+                .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+                .with(new RedefinitionListener())
+                .with(new Listener())
+                .installOn(instrumentation);
 
         PluginFinder.pluginInitCompleted();
 
@@ -137,7 +144,7 @@ public class SkyWalkingAgent {
         } catch (Exception e) {
             LOGGER.error(e, "Skywalking agent boot failure.");
         }
-
+        //Cat.addCatJar();
         Runtime.getRuntime()
                 .addShutdownHook(new Thread(ServiceManager.INSTANCE::shutdown, "skywalking service shutdown thread"));
     }
@@ -151,10 +158,11 @@ public class SkyWalkingAgent {
 
         @Override
         public DynamicType.Builder<?> transform(final DynamicType.Builder<?> builder,
-                                                final TypeDescription typeDescription,
-                                                final ClassLoader classLoader,
-                                                final JavaModule module) {
+                final TypeDescription typeDescription,
+                final ClassLoader classLoader,
+                final JavaModule module) {
             LoadedLibraryCollector.registerURLClassLoader(classLoader);
+            //Cat.addCatJar(classLoader);
             List<AbstractClassEnhancePluginDefine> pluginDefines = pluginFinder.find(typeDescription);
             if (pluginDefines.size() > 0) {
                 DynamicType.Builder<?> newBuilder = builder;
@@ -190,10 +198,10 @@ public class SkyWalkingAgent {
 
         @Override
         public void onTransformation(final TypeDescription typeDescription,
-                                     final ClassLoader classLoader,
-                                     final JavaModule module,
-                                     final boolean loaded,
-                                     final DynamicType dynamicType) {
+                final ClassLoader classLoader,
+                final JavaModule module,
+                final boolean loaded,
+                final DynamicType dynamicType) {
             if (LOGGER.isDebugEnable()) {
                 LOGGER.debug("On Transformation class {}.", typeDescription.getName());
             }
@@ -203,18 +211,18 @@ public class SkyWalkingAgent {
 
         @Override
         public void onIgnored(final TypeDescription typeDescription,
-                              final ClassLoader classLoader,
-                              final JavaModule module,
-                              final boolean loaded) {
+                final ClassLoader classLoader,
+                final JavaModule module,
+                final boolean loaded) {
 
         }
 
         @Override
         public void onError(final String typeName,
-                            final ClassLoader classLoader,
-                            final JavaModule module,
-                            final boolean loaded,
-                            final Throwable throwable) {
+                final ClassLoader classLoader,
+                final JavaModule module,
+                final boolean loaded,
+                final Throwable throwable) {
             LOGGER.error("Enhance class " + typeName + " error.", throwable);
         }
 
@@ -239,6 +247,41 @@ public class SkyWalkingAgent {
         @Override
         public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
             /* do nothing */
+        }
+    }
+
+    private static class Cat{
+        public static boolean isDebug(){
+            return "true".equals(System.getProperty("cat.debug","false"));
+        }
+        public static void addCatJar() {
+            if(!isDebug())return;
+            File file = null;
+            try {
+                file = new File(AgentPackagePath.getPath(), "cat");
+                if (file.exists() && file.isDirectory()) {
+                    String[] jarFileNames = file.list((dir, name) -> name.endsWith(".jar"));
+                    {
+                        for (String temp : jarFileNames) {
+                            File file1 = new File(file.getPath(), temp);
+                            instrumentation1.appendToSystemClassLoaderSearch(new JarFile(file1.getPath()));
+                            System.out.println("add cat jar " + temp);
+                        }
+                    }
+                }
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+        }
+
+
+        private static boolean checkClass(String[] loaders, String className) {
+            for (String temp : loaders) {
+                if (className.contains(temp)) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }
