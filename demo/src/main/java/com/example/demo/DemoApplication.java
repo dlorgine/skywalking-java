@@ -45,19 +45,10 @@ public class DemoApplication {
         return "test";
     }
 
-    @RequestMapping("/error2")
+    @RequestMapping("/error3")
     public String error2() {
-            Transaction t = Tracer.newTransaction("test", "t");
-            try {
-                RuntimeException r=new RuntimeException("ttt");
-                t.setStatus(r);
-                //Tracer.logError(r);
-            }catch (Throwable e){
-                t.setStatus(e);
-            }finally {
-                t.complete();
-            }
-        return "test";
+        RuntimeException r=new RuntimeException("ttt");
+        throw r;
     }
     private static Method getMethod(ClassLoader classLoader) {
         Method method = null;

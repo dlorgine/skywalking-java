@@ -26,7 +26,7 @@ import static org.apache.skywalking.apm.agent.core.conf.Config.Agent.CAUSE_EXCEP
 public enum ThrowableTransformer {
     INSTANCE;
 
-    private static final String LINE_SEPARATOR = System.getProperty("line.separator");
+    private static final String LINE_SEPARATOR = System.getProperty("line.separator")+"<br/>";
 
     public String convert2String(Throwable throwable, final int maxLength) {
         final StringBuilder stackMessage = new StringBuilder();

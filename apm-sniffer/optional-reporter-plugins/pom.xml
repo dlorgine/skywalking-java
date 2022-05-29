@@ -29,7 +29,9 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>kafka-reporter-plugin</module>
+<!--        <module>kafka-reporter-plugin</module>-->
+        <module>cat-reporter-plugin</module>
+
     </modules>
 
     <properties>
