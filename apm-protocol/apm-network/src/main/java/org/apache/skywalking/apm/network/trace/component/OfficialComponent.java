@@ -18,15 +18,23 @@
 
 package org.apache.skywalking.apm.network.trace.component;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 public class OfficialComponent implements Component {
+    private static Map<Integer,String> commpontMap=new ConcurrentHashMap<>(200);
     private int id;
     private String name;
 
     public OfficialComponent(int id, String name) {
         this.id = id;
         this.name = name;
+        commpontMap.put(id,name);
     }
 
+    public static String getName(int id){
+        return commpontMap.get(id);
+    }
     @Override
     public int getId() {
         return id;

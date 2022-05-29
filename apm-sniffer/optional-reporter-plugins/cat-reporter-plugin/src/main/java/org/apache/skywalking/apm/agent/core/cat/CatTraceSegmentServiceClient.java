@@ -41,6 +41,7 @@ import org.apache.skywalking.apm.commons.datacarrier.consumer.IConsumer;
 import org.apache.skywalking.apm.network.common.v3.KeyStringValuePair;
 import org.apache.skywalking.apm.network.language.agent.v3.SegmentObject;
 import org.apache.skywalking.apm.network.language.agent.v3.SpanObject;
+import org.apache.skywalking.apm.network.trace.component.OfficialComponent;
 import org.apache.skywalking.apm.util.StringUtil;
 
 import static org.apache.skywalking.apm.agent.core.conf.Config.Buffer.BUFFER_SIZE;
@@ -146,7 +147,7 @@ public class CatTraceSegmentServiceClient implements BootService, IConsumer<Trac
                 url=t.getOperationName();
             }
             String error=getError(t);
-            Transaction transaction= Cat.newTransaction(t.getSpanType().name(),url);
+            Transaction transaction= Cat.newTransaction(t.getSpanType().name()+":"+ OfficialComponent.getName(t.getComponentId()),url);
             if(StringUtil.isEmpty(error)){
                 transaction.setStatus(Transaction.SUCCESS);
             }else{
