@@ -48,7 +48,7 @@ public class LoaderInterceptor implements InstanceMethodsAroundInterceptor {
                 for (String temp : jarFileNames) {
                     File file1 = new File(file.getPath(), temp);
                     newLst.add(new URL("jar:file:"+file1.getPath()+"!/"));
-                    System.out.println("add cat jar " + temp);
+                    System.out.println("add cat1 jar " + temp);
                     flag=true;
                 }
             }

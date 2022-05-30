@@ -20,7 +20,11 @@ package org.apache.skywalking.apm.agent.core.cat;
 
 import com.dianping.cat.Cat;
 import com.dianping.cat.message.Transaction;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -131,33 +135,42 @@ public class CatTraceSegmentServiceClient implements BootService, IConsumer<Trac
 //        }
 //        carrier.produce(traceSegment);
         SegmentObject segmentObject=traceSegment.transform();
+        List<Transaction> transactions=new ArrayList<>();
         segmentObject.getSpansList().forEach(t->{
-            String url="";
-            String method="";
-            for (KeyStringValuePair keyStringValuePair:t.getTagsList()) {
-               if("url".equalsIgnoreCase(keyStringValuePair.getKey())){
-                   url=keyStringValuePair.getValue();
-               }
-               if("http.method".equalsIgnoreCase(keyStringValuePair.getKey())){
-                   method=keyStringValuePair.getValue();
-               }
-            }
-            url=url+":"+method;
-            if(url.length()==1){
-                url=t.getOperationName();
-            }
-            String error=getError(t);
-            Transaction transaction= Cat.newTransaction(t.getSpanType().name()+":"+ OfficialComponent.getName(t.getComponentId()),url);
-            if(StringUtil.isEmpty(error)){
-                transaction.setStatus(Transaction.SUCCESS);
-            }else{
-                transaction.setStatus(error);
-            }
-            transaction.setDurationInMillis(t.getEndTime()-t.getStartTime());
-            transaction.complete();
+            //createCatSpan(t);
+            transactions.add(createCatSpan(t));
         });
+        for(int i=transactions.size()-1;i>=0;i--){
+            transactions.get(i).complete();
+        }
+        //transactions.
 
+    }
 
+    private Transaction createCatSpan(SpanObject t) {
+        String url="";
+        String method="";
+        for (KeyStringValuePair keyStringValuePair: t.getTagsList()) {
+           if("url".equalsIgnoreCase(keyStringValuePair.getKey())){
+               url=keyStringValuePair.getValue();
+           }
+           if("http.method".equalsIgnoreCase(keyStringValuePair.getKey())){
+               method=keyStringValuePair.getValue();
+           }
+        }
+        url=url+":"+method;
+        if(url.length()==1){
+            url= t.getOperationName();
+        }
+        String error=getError(t);
+        Transaction transaction= Cat.newTransaction(t.getSpanType().name()+":"+ OfficialComponent.getName(t.getComponentId()),url);
+        if(StringUtil.isEmpty(error)){
+            transaction.setStatus(Transaction.SUCCESS);
+        }else{
+            transaction.setStatus(error);
+        }
+        transaction.setDurationInMillis(t.getEndTime()- t.getStartTime());
+        return transaction;
     }
 
     private String getError(SpanObject t){

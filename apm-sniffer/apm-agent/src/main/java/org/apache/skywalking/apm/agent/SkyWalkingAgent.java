@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.jar.JarFile;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.builder.AgentBuilder;
@@ -254,8 +255,10 @@ public class SkyWalkingAgent {
         public static boolean isDebug(){
             return "true".equals(System.getProperty("cat.debug","false"));
         }
+        private static AtomicBoolean flag=new java.util.concurrent.atomic.AtomicBoolean(false);
         public static void addCatJar() {
             if(!isDebug())return;
+            if(!flag.compareAndSet(false,true))return;
             File file = null;
             try {
                 file = new File(AgentPackagePath.getPath(), "cat");

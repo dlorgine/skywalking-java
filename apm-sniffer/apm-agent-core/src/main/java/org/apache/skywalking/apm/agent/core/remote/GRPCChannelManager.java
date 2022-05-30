@@ -70,15 +70,15 @@ public class GRPCChannelManager implements BootService, Runnable {
             LOGGER.error("Agent will not uplink any data.");
             return;
         }
-        grpcServers = Arrays.asList(Config.Collector.BACKEND_SERVICE.split(","));
-        connectCheckFuture = Executors.newSingleThreadScheduledExecutor(
-            new DefaultNamedThreadFactory("GRPCChannelManager")
-        ).scheduleAtFixedRate(
-            new RunnableWithExceptionProtection(
-                this,
-                t -> LOGGER.error("unexpected exception.", t)
-            ), 0, Config.Collector.GRPC_CHANNEL_CHECK_INTERVAL, TimeUnit.SECONDS
-        );
+//        grpcServers = Arrays.asList(Config.Collector.BACKEND_SERVICE.split(","));
+//        connectCheckFuture = Executors.newSingleThreadScheduledExecutor(
+//            new DefaultNamedThreadFactory("GRPCChannelManager")
+//        ).scheduleAtFixedRate(
+//            new RunnableWithExceptionProtection(
+//                this,
+//                t -> LOGGER.error("unexpected exception.", t)
+//            ), 0, Config.Collector.GRPC_CHANNEL_CHECK_INTERVAL, TimeUnit.SECONDS
+//        );
     }
 
     @Override
