@@ -20,6 +20,7 @@ package org.apache.skywalking.apm.agent.core.cat;
 
 import com.dianping.cat.Cat;
 import com.dianping.cat.message.Transaction;
+import com.dianping.cat.message.internal.DefaultTransaction;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -125,24 +126,17 @@ public class CatTraceSegmentServiceClient implements BootService, IConsumer<Trac
 
     @Override
     public void afterFinished(final TraceSegment traceSegment) {
-//        if (LOGGER.isDebugEnable()) {
-//            LOGGER.debug("Trace segment reporting, traceId: {}", traceSegment.getTraceSegmentId());
-//        }
+//        SegmentObject segmentObject=traceSegment.transform();
+//        List<Transaction> transactions=new ArrayList<>();
+//        List<SpanObject> spanObjects=segmentObject.getSpansList();
+//        for(int i=spanObjects.size()-1;i>=0;i--){
+//            //transactions.get(i).complete();
+//            transactions.add(createCatSpan(spanObjects.get(i)));
 //
-//        if (traceSegment.isIgnore()) {
-//            LOGGER.debug("Trace[TraceId={}] is ignored.", traceSegment.getTraceSegmentId());
-//            return;
 //        }
-//        carrier.produce(traceSegment);
-        SegmentObject segmentObject=traceSegment.transform();
-        List<Transaction> transactions=new ArrayList<>();
-        segmentObject.getSpansList().forEach(t->{
-            //createCatSpan(t);
-            transactions.add(createCatSpan(t));
-        });
-        for(int i=transactions.size()-1;i>=0;i--){
-            transactions.get(i).complete();
-        }
+//        for(int i=transactions.size()-1;i>=0;i--){
+//            transactions.get(i).complete();
+//        }
         //transactions.
 
     }
@@ -170,6 +164,10 @@ public class CatTraceSegmentServiceClient implements BootService, IConsumer<Trac
             transaction.setStatus(error);
         }
         transaction.setDurationInMillis(t.getEndTime()- t.getStartTime());
+        if(transaction instanceof DefaultTransaction){
+            ((DefaultTransaction) transaction).setDurationStart(t.getStartTime()*1000);
+        }
+        System.out.println("cat classloader "+transaction.getClass().getClassLoader());
         return transaction;
     }
 

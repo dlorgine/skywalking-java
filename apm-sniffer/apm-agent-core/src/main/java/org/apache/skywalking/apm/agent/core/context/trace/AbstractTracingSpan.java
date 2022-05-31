@@ -18,6 +18,9 @@
 
 package org.apache.skywalking.apm.agent.core.context.trace;
 
+import com.dianping.cat.Cat;
+import com.dianping.cat.message.Transaction;
+import com.dianping.cat.message.internal.DefaultTransaction;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -33,9 +36,11 @@ import org.apache.skywalking.apm.agent.core.context.util.KeyValuePair;
 import org.apache.skywalking.apm.agent.core.context.util.TagValuePair;
 import org.apache.skywalking.apm.agent.core.context.util.ThrowableTransformer;
 import org.apache.skywalking.apm.agent.core.dictionary.DictionaryUtil;
+import org.apache.skywalking.apm.network.common.v3.KeyStringValuePair;
 import org.apache.skywalking.apm.network.language.agent.v3.SpanObject;
 import org.apache.skywalking.apm.network.language.agent.v3.SpanType;
 import org.apache.skywalking.apm.network.trace.component.Component;
+import org.apache.skywalking.apm.network.trace.component.OfficialComponent;
 
 /**
  * The <code>AbstractTracingSpan</code> represents a group of {@link AbstractSpan} implementations, which belongs a real
@@ -94,6 +99,7 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
      */
     protected List<TraceSegmentRef> refs;
 
+    protected com.dianping.cat.message.Transaction transcation;
     /**
      * Tracing Mode. If true means represents all spans generated in this context should skip analysis.
      */
@@ -146,12 +152,40 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
     public boolean finish(TraceSegment owner) {
         this.endTime = System.currentTimeMillis();
         owner.archive(this);
+        if (transcation != null) {
+            if (!errorOccurred) {
+                transcation.setStatus(Transaction.SUCCESS);
+            }
+            if(transcation instanceof DefaultTransaction){
+                DefaultTransaction defaultTransaction=  (DefaultTransaction)transcation;
+                defaultTransaction.setType(getSpanType().name()+":"+ OfficialComponent.getName(componentId));
+                defaultTransaction.setName(getName());
+            }
+            transcation.complete();
+        }
         return true;
     }
-
+    private String getName(){
+        String url="";
+        String method="";
+        for (TagValuePair keyStringValuePair: tags) {
+            if("url".equalsIgnoreCase(keyStringValuePair.getKey().key())){
+                url=keyStringValuePair.getValue();
+            }
+            if("http.method".equalsIgnoreCase(keyStringValuePair.getKey().key())){
+                method=keyStringValuePair.getValue();
+            }
+        }
+        url=url+":"+method;
+        if(url.length()==1){
+            url= getOperationName();
+        }
+        return url;
+    }
     @Override
     public AbstractTracingSpan start() {
         this.startTime = System.currentTimeMillis();
+        transcation= Cat.newTransaction(getOperationName(),"");
         return this;
     }
 
@@ -177,6 +211,7 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
                                                 ThrowableTransformer.INSTANCE.convert2String(t, 4000)
                                             ))
                                             .build(System.currentTimeMillis()));
+        transcation.setStatus(t);
         return this;
     }
 
@@ -255,6 +290,15 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
         return this;
     }
 
+    private SpanType getSpanType(){
+        if (isEntry()) {
+            return SpanType.Entry;
+        } else if (isExit()) {
+            return SpanType.Exit;
+        } else {
+            return SpanType.Local;
+        }
+    }
     public SpanObject.Builder transform() {
         SpanObject.Builder spanBuilder = SpanObject.newBuilder();
 
@@ -264,13 +308,15 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
         spanBuilder.setEndTime(endTime);
         spanBuilder.setOperationName(operationName);
         spanBuilder.setSkipAnalysis(skipAnalysis);
-        if (isEntry()) {
-            spanBuilder.setSpanType(SpanType.Entry);
-        } else if (isExit()) {
-            spanBuilder.setSpanType(SpanType.Exit);
-        } else {
-            spanBuilder.setSpanType(SpanType.Local);
-        }
+        spanBuilder.setSpanType(getSpanType());
+
+//        if (isEntry()) {
+//            spanBuilder.setSpanType(SpanType.Entry);
+//        } else if (isExit()) {
+//            spanBuilder.setSpanType(SpanType.Exit);
+//        } else {
+//            spanBuilder.setSpanType(SpanType.Local);
+//        }
         if (this.layer != null) {
             spanBuilder.setSpanLayerValue(this.layer.getCode());
         }
