@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.apache.skywalking.apm.agent.core.boot.ServiceManager;
 import org.apache.skywalking.apm.agent.core.conf.Config;
 import org.apache.skywalking.apm.agent.core.context.ContextManager;
@@ -36,7 +37,6 @@ import org.apache.skywalking.apm.agent.core.context.util.KeyValuePair;
 import org.apache.skywalking.apm.agent.core.context.util.TagValuePair;
 import org.apache.skywalking.apm.agent.core.context.util.ThrowableTransformer;
 import org.apache.skywalking.apm.agent.core.dictionary.DictionaryUtil;
-import org.apache.skywalking.apm.network.common.v3.KeyStringValuePair;
 import org.apache.skywalking.apm.network.language.agent.v3.SpanObject;
 import org.apache.skywalking.apm.network.language.agent.v3.SpanType;
 import org.apache.skywalking.apm.network.trace.component.Component;
@@ -185,9 +185,41 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
     @Override
     public AbstractTracingSpan start() {
         this.startTime = System.currentTimeMillis();
+        addCatStart();
         transcation= Cat.newTransaction(getOperationName(),"");
         return this;
     }
+
+    private void addCatStart(){
+        Optional<String> rootId= ContextManager.getCorrelationContext().get(Cat.Context.ROOT);
+        Optional<String> parentId= ContextManager.getCorrelationContext().get(Cat.Context.PARENT);
+        Optional<String> childId= ContextManager.getCorrelationContext().get(Cat.Context.CHILD);
+        Cat.ContextDefault catContext = new Cat.ContextDefault();
+        if (rootId.isPresent()) {
+            catContext.addProperty(Cat.Context.ROOT, rootId.get());
+            catContext.addProperty(Cat.Context.PARENT, parentId.get());
+            catContext.addProperty(Cat.Context.CHILD, childId.get());
+            Cat.logRemoteCallServer(catContext);
+        }
+//        else {
+//            Cat.logRemoteCallClient(catContext, Cat.getManager().getDomain());
+//        }
+//        ContextManager.getCorrelationContext().put(Cat.Context.ROOT, catContext.getProperty(Cat.Context.ROOT));
+//        ContextManager.getCorrelationContext().put(Cat.Context.PARENT, catContext.getProperty(Cat.Context.PARENT));
+//        ContextManager.getCorrelationContext().put(Cat.Context.CHILD, catContext.getProperty(Cat.Context.CHILD));
+         if(isExit()){
+             addCatEnd();
+         }
+    }
+    private void addCatEnd(){
+        Cat.ContextDefault catContext = new Cat.ContextDefault();
+        Cat.logRemoteCallClient(catContext, Cat.getManager().getDomain());
+        ContextManager.getCorrelationContext().put(Cat.Context.ROOT, catContext.getProperty(Cat.Context.ROOT));
+        ContextManager.getCorrelationContext().put(Cat.Context.PARENT, catContext.getProperty(Cat.Context.PARENT));
+        ContextManager.getCorrelationContext().put(Cat.Context.CHILD, catContext.getProperty(Cat.Context.CHILD));
+
+    }
+
 
     /**
      * Record an exception event of the current walltime timestamp.

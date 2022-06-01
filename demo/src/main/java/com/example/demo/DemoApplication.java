@@ -9,6 +9,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.util.ClassUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 
 @SpringBootApplication
 @RestController
@@ -49,6 +50,21 @@ public class DemoApplication {
     public String error2() {
         RuntimeException r=new RuntimeException("ttt");
         throw r;
+    }
+
+    RestTemplate restTemplate=new RestTemplate();
+    @RequestMapping("/a2")
+    public String a() {
+        return restTemplate.getForObject("http://localhost:8081/b2",String.class);
+    }
+
+    @RequestMapping("/b2")
+    public String b() throws InterruptedException {
+        Transaction transaction=Tracer.newTransaction("test","test");
+        transaction.setStatus(Transaction.SUCCESS);
+        Thread.sleep(10L);
+        transaction.complete();
+        return "b";
     }
     private static Method getMethod(ClassLoader classLoader) {
         Method method = null;
