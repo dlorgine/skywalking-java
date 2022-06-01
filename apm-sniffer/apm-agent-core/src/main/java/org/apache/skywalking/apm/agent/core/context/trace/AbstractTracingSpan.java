@@ -22,6 +22,7 @@ import com.dianping.cat.Cat;
 import com.dianping.cat.message.Transaction;
 import com.dianping.cat.message.internal.DefaultTransaction;
 import com.sun.tools.javac.util.Pair;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -199,10 +200,19 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
         if(StringUtil.isNotEmpty(parrtern)){
             urlSchema.schema=parrtern+":"+method;
         }
-        if(url.length()==1){
+        if(url.length()==0){
             urlSchema.url= getOperationName();
         }else{
-            urlSchema.url=parrtern+":"+method;
+            if (isEntry()) {
+                try {
+                    URL url1 = new URL(url);
+                    urlSchema.url = url1.getPath() + ":" + method;
+                } catch (Throwable e) {
+                    urlSchema.url = url + ":" + method;
+                }
+            } else {
+                urlSchema.url = url + ":" + method;
+            }
         }
         return urlSchema;
     }

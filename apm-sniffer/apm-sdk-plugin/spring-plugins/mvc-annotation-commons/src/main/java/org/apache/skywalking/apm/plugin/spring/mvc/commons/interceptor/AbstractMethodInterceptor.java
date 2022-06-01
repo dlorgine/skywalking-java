@@ -18,6 +18,7 @@
 
 package org.apache.skywalking.apm.plugin.spring.mvc.commons.interceptor;
 
+import org.apache.skywalking.apm.agent.core.conf.Constants;
 import org.apache.skywalking.apm.agent.core.context.CarrierItem;
 import org.apache.skywalking.apm.agent.core.context.ContextCarrier;
 import org.apache.skywalking.apm.agent.core.context.ContextManager;
@@ -110,6 +111,7 @@ public abstract class AbstractMethodInterceptor implements InstanceMethodsAround
                     String pattern = (String)httpServletRequest.getAttribute(org.springframework.web.servlet.HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
                     if(StringUtil.isNotEmpty(pattern)){
                       Tags.URL_SCHEMA.set(span,pattern);
+                      addRespHeader(pattern);
                     }
                     Tags.HTTP.METHOD.set(span, httpServletRequest.getMethod());
                     span.setComponent(ComponentsDefine.SPRING_MVC_ANNOTATION);
@@ -157,6 +159,15 @@ public abstract class AbstractMethodInterceptor implements InstanceMethodsAround
             }
 
             stackDepth.increment();
+        }
+    }
+
+    private void addRespHeader(String pattern) {
+        Object request = ContextManager.getRuntimeContext().get(RESPONSE_KEY_IN_RUNTIME_CONTEXT);
+        try{
+            ((HttpServletResponse)request).addHeader(Tags.URL_SCHEMA.key(),pattern);
+        }catch (Throwable e){
+
         }
     }
 
