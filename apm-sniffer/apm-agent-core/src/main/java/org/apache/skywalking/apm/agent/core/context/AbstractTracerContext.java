@@ -84,6 +84,7 @@ public interface AbstractTracerContext {
      */
     AbstractSpan createEntrySpan(String operationName);
 
+
     /**
      * Create a local span
      *

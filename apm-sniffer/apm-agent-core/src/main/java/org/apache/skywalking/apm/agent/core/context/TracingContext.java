@@ -18,8 +18,10 @@
 
 package org.apache.skywalking.apm.agent.core.context;
 
+import com.dianping.cat.Cat;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.locks.ReentrantLock;
 import lombok.AccessLevel;
@@ -195,9 +197,26 @@ public class TracingContext implements AbstractTracerContext {
         if (span instanceof EntrySpan) {
             span.ref(ref);
         }
-
         carrier.extractExtensionTo(this);
         carrier.extractCorrelationTo(this);
+        addCat();
+    }
+
+    private void addCat() {
+        try{
+            if (StringUtil.isEmpty(Cat.getManager().getThreadLocalMessageTree().getRootMessageId())) {
+                Optional<String> rootId = ContextManager.getCorrelationContext().get(Cat.Context.ROOT);
+                Optional<String> parentId = ContextManager.getCorrelationContext().get(Cat.Context.PARENT);
+                Optional<String> childId = ContextManager.getCorrelationContext().get(Cat.Context.CHILD);
+                Cat.ContextDefault catContext = new Cat.ContextDefault();
+                if (rootId.isPresent()) {
+                    catContext.addProperty(Cat.Context.ROOT, rootId.get());
+                    catContext.addProperty(Cat.Context.PARENT, parentId.get());
+                    catContext.addProperty(Cat.Context.CHILD, childId.get());
+                    Cat.logRemoteCallServer(catContext);
+                }
+            }
+        }catch (Throwable e){}
     }
 
     /**

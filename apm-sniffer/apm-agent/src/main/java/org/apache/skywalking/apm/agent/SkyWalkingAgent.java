@@ -163,7 +163,6 @@ public class SkyWalkingAgent {
                 final ClassLoader classLoader,
                 final JavaModule module) {
             LoadedLibraryCollector.registerURLClassLoader(classLoader);
-            //Cat.addCatJar(classLoader);
             List<AbstractClassEnhancePluginDefine> pluginDefines = pluginFinder.find(typeDescription);
             if (pluginDefines.size() > 0) {
                 DynamicType.Builder<?> newBuilder = builder;
@@ -248,43 +247,6 @@ public class SkyWalkingAgent {
         @Override
         public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
             /* do nothing */
-        }
-    }
-
-    private static class Cat{
-        public static boolean isDebug(){
-            return "true".equals(System.getProperty("cat.debug","false"));
-        }
-        private static AtomicBoolean flag=new java.util.concurrent.atomic.AtomicBoolean(false);
-        public static void addCatJar() {
-            if(!isDebug())return;
-            if(!flag.compareAndSet(false,true))return;
-            File file = null;
-            try {
-                file = new File(AgentPackagePath.getPath(), "cat");
-                if (file.exists() && file.isDirectory()) {
-                    String[] jarFileNames = file.list((dir, name) -> name.endsWith(".jar"));
-                    {
-                        for (String temp : jarFileNames) {
-                            File file1 = new File(file.getPath(), temp);
-                            instrumentation1.appendToSystemClassLoaderSearch(new JarFile(file1.getPath()));
-                            System.out.println("add cat jar " + temp);
-                        }
-                    }
-                }
-            } catch (Throwable e) {
-                e.printStackTrace();
-            }
-        }
-
-
-        private static boolean checkClass(String[] loaders, String className) {
-            for (String temp : loaders) {
-                if (className.contains(temp)) {
-                    return true;
-                }
-            }
-            return false;
         }
     }
 }

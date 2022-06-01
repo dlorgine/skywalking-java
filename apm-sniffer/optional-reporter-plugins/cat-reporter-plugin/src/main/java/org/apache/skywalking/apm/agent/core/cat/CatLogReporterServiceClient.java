@@ -18,26 +18,21 @@
 package org.apache.skywalking.apm.agent.core.cat;
 
 import java.util.List;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.utils.Bytes;
 import org.apache.skywalking.apm.agent.core.boot.OverrideImplementor;
 import org.apache.skywalking.apm.agent.core.boot.ServiceManager;
 import org.apache.skywalking.apm.agent.core.remote.LogReportServiceClient;
-import org.apache.skywalking.apm.agent.core.util.CollectionUtil;
 import org.apache.skywalking.apm.network.logging.v3.LogData;
 
 @OverrideImplementor(LogReportServiceClient.class)
 public class CatLogReporterServiceClient extends LogReportServiceClient implements CatConnectionStatusListener {
 
     private String topic;
-    private KafkaProducer<String, Bytes> producer;
+    //private KafkaProducer<String, Bytes> producer;
 
     @Override
     public void prepare() {
         CatProducerManager producerManager = ServiceManager.INSTANCE.findService(CatProducerManager.class);
         producerManager.addListener(this);
-        topic = producerManager.formatTopicNameThenRegister(CatReporterPluginConfig.Plugin.Kafka.TOPIC_LOGGING);
     }
 
     @Override
@@ -47,19 +42,13 @@ public class CatLogReporterServiceClient extends LogReportServiceClient implemen
 
     @Override
     public void consume(final List<LogData> dataList) {
-        if (producer == null || CollectionUtil.isEmpty(dataList)) {
-            return;
-        }
 
-        for (LogData data : dataList) {
-            producer.send(new ProducerRecord<>(topic, data.getService(), Bytes.wrap(data.toByteArray())));
-        }
     }
 
     @Override
     public void onStatusChanged(final CatConnectionStatus status) {
         if (status == CatConnectionStatus.CONNECTED) {
-            producer = ServiceManager.INSTANCE.findService(CatProducerManager.class).getProducer();
+            //producer = ServiceManager.INSTANCE.findService(CatProducerManager.class).getProducer();
         }
     }
 }

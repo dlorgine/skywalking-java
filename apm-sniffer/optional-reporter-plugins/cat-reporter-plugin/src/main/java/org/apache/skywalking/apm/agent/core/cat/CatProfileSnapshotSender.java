@@ -19,17 +19,12 @@
 package org.apache.skywalking.apm.agent.core.cat;
 
 import java.util.List;
-
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.utils.Bytes;
 import org.apache.skywalking.apm.agent.core.boot.OverrideImplementor;
 import org.apache.skywalking.apm.agent.core.boot.ServiceManager;
 import org.apache.skywalking.apm.agent.core.logging.api.ILog;
 import org.apache.skywalking.apm.agent.core.logging.api.LogManager;
 import org.apache.skywalking.apm.agent.core.profile.ProfileSnapshotSender;
 import org.apache.skywalking.apm.agent.core.profile.TracingThreadSnapshot;
-import org.apache.skywalking.apm.network.language.profile.v3.ThreadSnapshot;
 
 /**
  * To transport profiling tasks between OAP Server and agent with gRPC. This is why we still have to configure gRPC. But
@@ -39,14 +34,11 @@ import org.apache.skywalking.apm.network.language.profile.v3.ThreadSnapshot;
 public class CatProfileSnapshotSender extends ProfileSnapshotSender implements CatConnectionStatusListener {
     private static final ILog LOGGER = LogManager.getLogger(ProfileSnapshotSender.class);
 
-    private String topic;
-    private KafkaProducer<String, Bytes> producer;
 
     @Override
     public void prepare() {
         CatProducerManager producerManager = ServiceManager.INSTANCE.findService(CatProducerManager.class);
         producerManager.addListener(this);
-        topic = producerManager.formatTopicNameThenRegister(CatReporterPluginConfig.Plugin.Kafka.TOPIC_PROFILING);
     }
 
     @Override
@@ -55,29 +47,11 @@ public class CatProfileSnapshotSender extends ProfileSnapshotSender implements C
 
     @Override
     public void send(final List<TracingThreadSnapshot> buffer) {
-        if (producer == null) {
-            return;
-        }
-        for (TracingThreadSnapshot snapshot : buffer) {
-            final ThreadSnapshot object = snapshot.transform();
-            if (LOGGER.isDebugEnable()) {
-                LOGGER.debug("Thread snapshot reporting, topic: {}, taskId: {}, sequence:{}, traceId: {}",
-                             object.getTaskId(), object.getSequence(), object.getTraceSegmentId()
-                );
-            }
 
-            producer.send(new ProducerRecord<>(
-                topic,
-                object.getTaskId() + object.getSequence(),
-                Bytes.wrap(object.toByteArray())
-            ));
-        }
     }
 
     @Override
     public void onStatusChanged(CatConnectionStatus status) {
-        if (status == CatConnectionStatus.CONNECTED) {
-            producer = ServiceManager.INSTANCE.findService(CatProducerManager.class).getProducer();
-        }
+
     }
 }

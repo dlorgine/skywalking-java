@@ -36,6 +36,7 @@ import org.apache.skywalking.apm.plugin.spring.mvc.commons.RequestUtil;
 import org.apache.skywalking.apm.plugin.spring.mvc.commons.SpringMVCPluginConfig;
 import org.apache.skywalking.apm.plugin.spring.mvc.commons.exception.IllegalMethodStackDepthException;
 import org.apache.skywalking.apm.plugin.spring.mvc.commons.exception.ServletResponseNotFoundException;
+import org.apache.skywalking.apm.util.StringUtil;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 
@@ -106,6 +107,10 @@ public abstract class AbstractMethodInterceptor implements InstanceMethodsAround
                                                                    (EnhanceRequireObjectCache) objInst.getSkyWalkingDynamicField());
                     AbstractSpan span = ContextManager.createEntrySpan(operationName, contextCarrier);
                     Tags.URL.set(span, httpServletRequest.getRequestURL().toString());
+                    String pattern = (String)httpServletRequest.getAttribute(org.springframework.web.servlet.HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
+                    if(StringUtil.isNotEmpty(pattern)){
+                      Tags.URL_SCHEMA.set(span,pattern);
+                    }
                     Tags.HTTP.METHOD.set(span, httpServletRequest.getMethod());
                     span.setComponent(ComponentsDefine.SPRING_MVC_ANNOTATION);
                     SpanLayer.asHttp(span);

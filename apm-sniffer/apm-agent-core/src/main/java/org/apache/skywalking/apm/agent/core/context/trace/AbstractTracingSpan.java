@@ -21,6 +21,7 @@ package org.apache.skywalking.apm.agent.core.context.trace;
 import com.dianping.cat.Cat;
 import com.dianping.cat.message.Transaction;
 import com.dianping.cat.message.internal.DefaultTransaction;
+import com.sun.tools.javac.util.Pair;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -41,6 +42,7 @@ import org.apache.skywalking.apm.network.language.agent.v3.SpanObject;
 import org.apache.skywalking.apm.network.language.agent.v3.SpanType;
 import org.apache.skywalking.apm.network.trace.component.Component;
 import org.apache.skywalking.apm.network.trace.component.OfficialComponent;
+import org.apache.skywalking.apm.util.StringUtil;
 
 /**
  * The <code>AbstractTracingSpan</code> represents a group of {@link AbstractSpan} implementations, which belongs a real
@@ -159,65 +161,66 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
             if(transcation instanceof DefaultTransaction){
                 DefaultTransaction defaultTransaction=  (DefaultTransaction)transcation;
                 defaultTransaction.setType(getSpanType().name()+":"+ OfficialComponent.getName(componentId));
-                defaultTransaction.setName(getName());
+                UrlSchema urlSchema=getSchema();
+                if(StringUtil.isNotEmpty(urlSchema.schema)){
+                   defaultTransaction.setName(urlSchema.schema);
+                   if(!urlSchema.url.equals(urlSchema.schema)){
+                       defaultTransaction.addData("orign-url",urlSchema.url);
+                   }
+                }else {
+                    defaultTransaction.setName(urlSchema.url);
+                }
+
             }
             transcation.complete();
         }
         return true;
     }
-    private String getName(){
+    public static class UrlSchema{
+        public String url;
+        public String schema;
+    }
+    private UrlSchema getSchema(){
+        UrlSchema urlSchema=new UrlSchema();
         String url="";
         String method="";
+        String parrtern="";
         for (TagValuePair keyStringValuePair: tags) {
-            if("url".equalsIgnoreCase(keyStringValuePair.getKey().key())){
+            if( Tags.URL.key().equalsIgnoreCase(keyStringValuePair.getKey().key())){
                 url=keyStringValuePair.getValue();
             }
-            if("http.method".equalsIgnoreCase(keyStringValuePair.getKey().key())){
+            else if( Tags.HTTP.METHOD.key().equalsIgnoreCase(keyStringValuePair.getKey().key())){
                 method=keyStringValuePair.getValue();
             }
+            else if( Tags.URL_SCHEMA.key().equalsIgnoreCase(keyStringValuePair.getKey().key())){
+                parrtern=keyStringValuePair.getValue();
+            }
         }
-        url=url+":"+method;
+        if(StringUtil.isNotEmpty(parrtern)){
+            urlSchema.schema=parrtern+":"+method;
+        }
         if(url.length()==1){
-            url= getOperationName();
+            urlSchema.url= getOperationName();
+        }else{
+            urlSchema.url=parrtern+":"+method;
         }
-        return url;
+        return urlSchema;
     }
     @Override
     public AbstractTracingSpan start() {
         this.startTime = System.currentTimeMillis();
-        addCatStart();
+        addCat();
         transcation= Cat.newTransaction(getOperationName(),"");
         return this;
     }
-
-    private void addCatStart(){
-        Optional<String> rootId= ContextManager.getCorrelationContext().get(Cat.Context.ROOT);
-        Optional<String> parentId= ContextManager.getCorrelationContext().get(Cat.Context.PARENT);
-        Optional<String> childId= ContextManager.getCorrelationContext().get(Cat.Context.CHILD);
-        Cat.ContextDefault catContext = new Cat.ContextDefault();
-        if (rootId.isPresent()) {
-            catContext.addProperty(Cat.Context.ROOT, rootId.get());
-            catContext.addProperty(Cat.Context.PARENT, parentId.get());
-            catContext.addProperty(Cat.Context.CHILD, childId.get());
-            Cat.logRemoteCallServer(catContext);
+    private void addCat(){
+        if(isExit()) {
+            Cat.ContextDefault catContext = new Cat.ContextDefault();
+            Cat.logRemoteCallClient(catContext, Cat.getManager().getDomain());
+            ContextManager.getCorrelationContext().put(Cat.Context.ROOT, catContext.getProperty(Cat.Context.ROOT));
+            ContextManager.getCorrelationContext().put(Cat.Context.PARENT, catContext.getProperty(Cat.Context.PARENT));
+            ContextManager.getCorrelationContext().put(Cat.Context.CHILD, catContext.getProperty(Cat.Context.CHILD));
         }
-//        else {
-//            Cat.logRemoteCallClient(catContext, Cat.getManager().getDomain());
-//        }
-//        ContextManager.getCorrelationContext().put(Cat.Context.ROOT, catContext.getProperty(Cat.Context.ROOT));
-//        ContextManager.getCorrelationContext().put(Cat.Context.PARENT, catContext.getProperty(Cat.Context.PARENT));
-//        ContextManager.getCorrelationContext().put(Cat.Context.CHILD, catContext.getProperty(Cat.Context.CHILD));
-         if(isExit()){
-             addCatEnd();
-         }
-    }
-    private void addCatEnd(){
-        Cat.ContextDefault catContext = new Cat.ContextDefault();
-        Cat.logRemoteCallClient(catContext, Cat.getManager().getDomain());
-        ContextManager.getCorrelationContext().put(Cat.Context.ROOT, catContext.getProperty(Cat.Context.ROOT));
-        ContextManager.getCorrelationContext().put(Cat.Context.PARENT, catContext.getProperty(Cat.Context.PARENT));
-        ContextManager.getCorrelationContext().put(Cat.Context.CHILD, catContext.getProperty(Cat.Context.CHILD));
-
     }
 
 

@@ -32,6 +32,8 @@ public final class Tags {
     private Tags() {
     }
 
+    public static final StringTag URL_SCHEMA = new StringTag(100, "url_schema");
+
     /**
      * URL records the url of the incoming request.
      */

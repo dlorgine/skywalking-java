@@ -7,13 +7,15 @@ import java.net.URL;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.util.ClassUtils;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 @SpringBootApplication
 @RestController
-public class DemoApplication {
+public class DemoApplication1 {
 
     //-javaagent:/Users/chenyanli/Documents/airwallex/github/skywalking-java/skywalking-agent/skywalking-agent.jar
     @RequestMapping("/test")
@@ -53,18 +55,27 @@ public class DemoApplication {
     }
 
     RestTemplate restTemplate=new RestTemplate();
-    @RequestMapping("/a5")
+    @RequestMapping("/a2")
     public String a() {
-        return restTemplate.getForObject("http://localhost:8082/b5/sfsfsfsdf",String.class);
+        return restTemplate.getForObject("http://localhost:8081/b2",String.class);
     }
 
-    @RequestMapping("/b2")
+    @RequestMapping("/b4")
     public String b() throws InterruptedException {
         Transaction transaction=Tracer.newTransaction("test","test");
         transaction.setStatus(Transaction.SUCCESS);
         Thread.sleep(10L);
         transaction.complete();
         return "b";
+    }
+
+    @RequestMapping("/b5/{b}")
+    public String b5(@PathVariable("b")String b) throws InterruptedException {
+        Transaction transaction=Tracer.newTransaction("test","test");
+        transaction.setStatus(new RuntimeException("fsfsfsfsdf"));
+        Thread.sleep(10L);
+        transaction.complete();
+        return b;
     }
     private static Method getMethod(ClassLoader classLoader) {
         Method method = null;
@@ -82,7 +93,7 @@ public class DemoApplication {
     public static void main(String[] args) throws InterruptedException {
        // Thread.sleep(20_000L);
         //Method method=getMethod(Thread.currentThread().getContextClassLoader());
-		SpringApplication.run(DemoApplication.class, args);
+		SpringApplication.run(DemoApplication1.class, args);
     }
 
     private static String getPath(String path) {

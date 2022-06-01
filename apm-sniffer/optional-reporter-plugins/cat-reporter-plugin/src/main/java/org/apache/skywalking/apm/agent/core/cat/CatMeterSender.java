@@ -19,20 +19,14 @@
 package org.apache.skywalking.apm.agent.core.cat;
 
 import java.util.Map;
-
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.utils.Bytes;
 import org.apache.skywalking.apm.agent.core.boot.OverrideImplementor;
 import org.apache.skywalking.apm.agent.core.boot.ServiceManager;
-import org.apache.skywalking.apm.agent.core.conf.Config;
 import org.apache.skywalking.apm.agent.core.logging.api.ILog;
 import org.apache.skywalking.apm.agent.core.logging.api.LogManager;
 import org.apache.skywalking.apm.agent.core.meter.BaseMeter;
 import org.apache.skywalking.apm.agent.core.meter.MeterId;
 import org.apache.skywalking.apm.agent.core.meter.MeterSender;
 import org.apache.skywalking.apm.agent.core.meter.MeterService;
-import org.apache.skywalking.apm.network.language.agent.v3.MeterDataCollection;
 
 /**
  * A report to send Metrics data of meter system to Kafka Broker.
@@ -42,13 +36,12 @@ public class CatMeterSender extends MeterSender implements CatConnectionStatusLi
     private static final ILog LOGGER = LogManager.getLogger(CatTraceSegmentServiceClient.class);
 
     private String topic;
-    private KafkaProducer<String, Bytes> producer;
+    //private KafkaProducer<String, Bytes> producer;
 
     @Override
     public void prepare() {
         CatProducerManager producerManager = ServiceManager.INSTANCE.findService(CatProducerManager.class);
         producerManager.addListener(this);
-        topic = producerManager.formatTopicNameThenRegister(CatReporterPluginConfig.Plugin.Kafka.TOPIC_METER);
     }
 
     @Override
@@ -57,26 +50,11 @@ public class CatMeterSender extends MeterSender implements CatConnectionStatusLi
 
     @Override
     public void send(Map<MeterId, BaseMeter> meterMap, MeterService meterService) {
-        if (producer == null) {
-            return;
-        }
-        MeterDataCollection.Builder builder = MeterDataCollection.newBuilder();
-        transform(meterMap, meterData -> {
-            if (LOGGER.isDebugEnable()) {
-                LOGGER.debug("Meter data reporting, instance: {}", meterData.getServiceInstance());
-            }
-            builder.addMeterData(meterData);
-        });
-        producer.send(
-            new ProducerRecord<>(topic, Config.Agent.INSTANCE_NAME, Bytes.wrap(builder.build().toByteArray())));
 
-        producer.flush();
     }
 
     @Override
     public void onStatusChanged(CatConnectionStatus status) {
-        if (status == CatConnectionStatus.CONNECTED) {
-            producer = ServiceManager.INSTANCE.findService(CatProducerManager.class).getProducer();
-        }
+
     }
 }

@@ -18,19 +18,11 @@
 
 package org.apache.skywalking.apm.agent.core.cat;
 
-import com.dianping.cat.Cat;
-import com.dianping.cat.message.Transaction;
-import com.dianping.cat.message.internal.DefaultTransaction;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
+import static org.apache.skywalking.apm.agent.core.conf.Config.Buffer.BUFFER_SIZE;
+import static org.apache.skywalking.apm.agent.core.conf.Config.Buffer.CHANNEL_SIZE;
+
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Properties;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.utils.Bytes;
 import org.apache.skywalking.apm.agent.core.boot.BootService;
 import org.apache.skywalking.apm.agent.core.boot.OverrideImplementor;
 import org.apache.skywalking.apm.agent.core.boot.ServiceManager;
@@ -43,14 +35,6 @@ import org.apache.skywalking.apm.agent.core.remote.TraceSegmentServiceClient;
 import org.apache.skywalking.apm.commons.datacarrier.DataCarrier;
 import org.apache.skywalking.apm.commons.datacarrier.buffer.BufferStrategy;
 import org.apache.skywalking.apm.commons.datacarrier.consumer.IConsumer;
-import org.apache.skywalking.apm.network.common.v3.KeyStringValuePair;
-import org.apache.skywalking.apm.network.language.agent.v3.SegmentObject;
-import org.apache.skywalking.apm.network.language.agent.v3.SpanObject;
-import org.apache.skywalking.apm.network.trace.component.OfficialComponent;
-import org.apache.skywalking.apm.util.StringUtil;
-
-import static org.apache.skywalking.apm.agent.core.conf.Config.Buffer.BUFFER_SIZE;
-import static org.apache.skywalking.apm.agent.core.conf.Config.Buffer.CHANNEL_SIZE;
 
 /**
  * A tracing segment data reporter.
@@ -60,8 +44,6 @@ public class CatTraceSegmentServiceClient implements BootService, IConsumer<Trac
         CatConnectionStatusListener {
     private static final ILog LOGGER = LogManager.getLogger(CatTraceSegmentServiceClient.class);
 
-    private String topic;
-    private KafkaProducer<String, Bytes> producer;
 
     private volatile DataCarrier<TraceSegment> carrier;
 
@@ -69,7 +51,6 @@ public class CatTraceSegmentServiceClient implements BootService, IConsumer<Trac
     public void prepare() {
         CatProducerManager producerManager = ServiceManager.INSTANCE.findService(CatProducerManager.class);
         producerManager.addListener(this);
-        topic = producerManager.formatTopicNameThenRegister(CatReporterPluginConfig.Plugin.Kafka.TOPIC_SEGMENT);
     }
 
     @Override
@@ -96,22 +77,7 @@ public class CatTraceSegmentServiceClient implements BootService, IConsumer<Trac
 
     @Override
     public void consume(final List<TraceSegment> data) {
-        if (producer == null) {
-            return;
-        }
-        data.forEach(traceSegment -> {
-            SegmentObject upstreamSegment = traceSegment.transform();
-            ProducerRecord<String, Bytes> record = new ProducerRecord<>(
-                topic,
-                upstreamSegment.getTraceSegmentId(),
-                Bytes.wrap(upstreamSegment.toByteArray())
-            );
-            producer.send(record, (m, e) -> {
-                if (Objects.nonNull(e)) {
-                    LOGGER.error("Failed to report TraceSegment.", e);
-                }
-            });
-        });
+
     }
 
     @Override
@@ -126,73 +92,14 @@ public class CatTraceSegmentServiceClient implements BootService, IConsumer<Trac
 
     @Override
     public void afterFinished(final TraceSegment traceSegment) {
-//        SegmentObject segmentObject=traceSegment.transform();
-//        List<Transaction> transactions=new ArrayList<>();
-//        List<SpanObject> spanObjects=segmentObject.getSpansList();
-//        for(int i=spanObjects.size()-1;i>=0;i--){
-//            //transactions.get(i).complete();
-//            transactions.add(createCatSpan(spanObjects.get(i)));
-//
-//        }
-//        for(int i=transactions.size()-1;i>=0;i--){
-//            transactions.get(i).complete();
-//        }
-        //transactions.
+
 
     }
 
-    private Transaction createCatSpan(SpanObject t) {
-        String url="";
-        String method="";
-        for (KeyStringValuePair keyStringValuePair: t.getTagsList()) {
-           if("url".equalsIgnoreCase(keyStringValuePair.getKey())){
-               url=keyStringValuePair.getValue();
-           }
-           if("http.method".equalsIgnoreCase(keyStringValuePair.getKey())){
-               method=keyStringValuePair.getValue();
-           }
-        }
-        url=url+":"+method;
-        if(url.length()==1){
-            url= t.getOperationName();
-        }
-        String error=getError(t);
-        Transaction transaction= Cat.newTransaction(t.getSpanType().name()+":"+ OfficialComponent.getName(t.getComponentId()),url);
-        if(StringUtil.isEmpty(error)){
-            transaction.setStatus(Transaction.SUCCESS);
-        }else{
-            transaction.setStatus(error);
-        }
-        transaction.setDurationInMillis(t.getEndTime()- t.getStartTime());
-        if(transaction instanceof DefaultTransaction){
-            ((DefaultTransaction) transaction).setDurationStart(t.getStartTime()*1000);
-        }
-        System.out.println("cat classloader "+transaction.getClass().getClassLoader());
-        return transaction;
-    }
 
-    private String getError(SpanObject t){
-        String stack="";
-        if(t.getIsError()){
-            for (org.apache.skywalking.apm.network.language.agent.v3.Log log:t.getLogsList()) {
-                boolean errflag=false;
-                for(KeyStringValuePair keyStringValuePair: log.getDataList()){
-                    if("event".equals(keyStringValuePair.getKey())&&"error".equals(keyStringValuePair.getValue())){
-                        errflag=true;
-                    }
-                    else if("stack".equals(keyStringValuePair.getKey())){
-                        stack= keyStringValuePair.getValue();
-                    }
-                }
-                if(errflag)break;
-            }
-        }
-        return stack;
-    }
     @Override
     public void onStatusChanged(CatConnectionStatus status) {
         if (status == CatConnectionStatus.CONNECTED) {
-            producer = ServiceManager.INSTANCE.findService(CatProducerManager.class).getProducer();
         }
     }
 }

@@ -30,11 +30,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka-clients</artifactId>
-            <version>${kafka-clients.version}</version>
-        </dependency>
-        <dependency>
             <groupId>com.dianping.cat</groupId>
             <artifactId>cat-client</artifactId>
             <version>3.0.2-1</version>
