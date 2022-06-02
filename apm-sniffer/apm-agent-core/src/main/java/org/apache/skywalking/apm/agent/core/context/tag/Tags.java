@@ -32,7 +32,10 @@ public final class Tags {
     private Tags() {
     }
 
-    public static final StringTag URL_SCHEMA = new StringTag(100, "url_schema");
+    public static final StringTag URL_SCHEMA = new StringTag(100, "sw-url-schema");
+
+    public static final StringTag DOMAIN_NAME = new StringTag(200, "sw-domain-name");
+
 
     /**
      * URL records the url of the incoming request.
