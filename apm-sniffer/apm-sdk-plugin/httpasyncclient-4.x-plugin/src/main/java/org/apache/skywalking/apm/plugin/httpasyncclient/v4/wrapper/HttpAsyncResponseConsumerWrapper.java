@@ -46,9 +46,14 @@ public class HttpAsyncResponseConsumerWrapper<T> implements HttpAsyncResponseCon
     public void responseReceived(HttpResponse response) throws IOException, HttpException {
         if (ContextManager.isActive()) {
             int statusCode = response.getStatusLine().getStatusCode();
+            AbstractSpan span = ContextManager.activeSpan();
             if (statusCode >= 400) {
-                AbstractSpan span = ContextManager.activeSpan().errorOccurred();
+                span.errorOccurred();
                 Tags.HTTP_RESPONSE_STATUS_CODE.set(span, statusCode);
+            }
+            if(response.getHeaders(Tags.URL_SCHEMA.key()).length>0){
+             Tags.URL_SCHEMA.set(span, (response.getHeaders(Tags.URL_SCHEMA.key())[0].getValue()));
+             Tags.DOMAIN_NAME.set(span, (response.getHeaders(Tags.DOMAIN_NAME.key())[0].getValue()));
             }
             ContextManager.stopSpan();
         }

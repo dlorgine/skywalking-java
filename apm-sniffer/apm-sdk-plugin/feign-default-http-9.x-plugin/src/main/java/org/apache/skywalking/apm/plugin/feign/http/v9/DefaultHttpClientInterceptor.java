@@ -158,6 +158,10 @@ public class DefaultHttpClientInterceptor implements InstanceMethodsAroundInterc
                 span.errorOccurred();
                 Tags.HTTP_RESPONSE_STATUS_CODE.set(span, statusCode);
             }
+            if(response.headers().get(Tags.URL_SCHEMA.key()).size()>0){
+             Tags.URL_SCHEMA.set(span,response.headers().get(Tags.URL_SCHEMA.key()).iterator().next());
+             Tags.DOMAIN_NAME.set(span,response.headers().get(Tags.DOMAIN_NAME.key()).iterator().next());
+            }
         }
 
         ContextManager.stopSpan();

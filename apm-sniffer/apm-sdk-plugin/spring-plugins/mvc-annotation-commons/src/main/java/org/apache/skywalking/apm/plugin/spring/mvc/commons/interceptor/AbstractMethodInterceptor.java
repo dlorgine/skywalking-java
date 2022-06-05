@@ -18,6 +18,7 @@
 
 package org.apache.skywalking.apm.plugin.spring.mvc.commons.interceptor;
 
+import com.dianping.cat.Cat;
 import org.apache.skywalking.apm.agent.core.conf.Constants;
 import org.apache.skywalking.apm.agent.core.context.CarrierItem;
 import org.apache.skywalking.apm.agent.core.context.ContextCarrier;
@@ -163,9 +164,10 @@ public abstract class AbstractMethodInterceptor implements InstanceMethodsAround
     }
 
     private void addRespHeader(String pattern) {
-        Object request = ContextManager.getRuntimeContext().get(RESPONSE_KEY_IN_RUNTIME_CONTEXT);
+        Object response = ContextManager.getRuntimeContext().get(RESPONSE_KEY_IN_RUNTIME_CONTEXT);
         try{
-            ((HttpServletResponse)request).addHeader(Tags.URL_SCHEMA.key(),pattern);
+            ((HttpServletResponse)response).addHeader(Tags.URL_SCHEMA.key(),pattern);
+            ((HttpServletResponse)response).addHeader(Tags.DOMAIN_NAME.key(), Cat.getManager().getDomain());
         }catch (Throwable e){
 
         }

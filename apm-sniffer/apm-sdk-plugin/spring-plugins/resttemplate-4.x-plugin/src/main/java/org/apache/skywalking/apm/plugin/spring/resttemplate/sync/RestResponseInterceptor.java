@@ -25,6 +25,7 @@ import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.EnhancedI
 import org.apache.skywalking.apm.agent.core.context.ContextManager;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.InstanceMethodsAroundInterceptor;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.MethodInterceptResult;
+import org.apache.skywalking.apm.util.StringUtil;
 import org.springframework.http.client.ClientHttpResponse;
 
 public class RestResponseInterceptor implements InstanceMethodsAroundInterceptor {
@@ -45,6 +46,10 @@ public class RestResponseInterceptor implements InstanceMethodsAroundInterceptor
         if (statusCode >= 400) {
             span.errorOccurred();
             Tags.HTTP_RESPONSE_STATUS_CODE.set(span, statusCode);
+        }
+        if(StringUtil.isNotEmpty(response.getHeaders().getFirst(Tags.URL_SCHEMA.key()))) {
+            Tags.URL_SCHEMA.set(span, response.getHeaders().getFirst(Tags.URL_SCHEMA.key()));
+            Tags.DOMAIN_NAME.set(span, response.getHeaders().getFirst(Tags.DOMAIN_NAME.key()));
         }
         return ret;
     }
