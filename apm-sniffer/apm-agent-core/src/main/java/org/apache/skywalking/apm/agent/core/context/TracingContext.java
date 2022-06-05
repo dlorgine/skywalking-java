@@ -27,6 +27,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import lombok.AccessLevel;
 import lombok.Getter;
 import org.apache.skywalking.apm.agent.core.boot.ServiceManager;
+import org.apache.skywalking.apm.agent.core.cat.CatContext;
 import org.apache.skywalking.apm.agent.core.conf.Config;
 import org.apache.skywalking.apm.agent.core.conf.dynamic.watcher.SpanLimitWatcher;
 import org.apache.skywalking.apm.agent.core.context.ids.DistributedTraceId;
@@ -208,7 +209,7 @@ public class TracingContext implements AbstractTracerContext {
                 Optional<String> rootId = ContextManager.getCorrelationContext().get(Cat.Context.ROOT);
                 Optional<String> parentId = ContextManager.getCorrelationContext().get(Cat.Context.PARENT);
                 Optional<String> childId = ContextManager.getCorrelationContext().get(Cat.Context.CHILD);
-                Cat.ContextDefault catContext = new Cat.ContextDefault();
+                CatContext catContext = new CatContext();
                 if (rootId.isPresent()) {
                     catContext.addProperty(Cat.Context.ROOT, rootId.get());
                     catContext.addProperty(Cat.Context.PARENT, parentId.get());

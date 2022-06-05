@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.skywalking.apm.agent.core.boot.ServiceManager;
+import org.apache.skywalking.apm.agent.core.cat.CatContext;
 import org.apache.skywalking.apm.agent.core.conf.Config;
 import org.apache.skywalking.apm.agent.core.context.ContextManager;
 import org.apache.skywalking.apm.agent.core.context.TracingContext;
@@ -225,7 +226,7 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
     }
     private void addCat(){
         if(isExit()) {
-            Cat.ContextDefault catContext = new Cat.ContextDefault();
+            CatContext catContext = new CatContext();
             Cat.logRemoteCallClient(catContext, Cat.getManager().getDomain());
             ContextManager.getCorrelationContext().put(Cat.Context.ROOT, catContext.getProperty(Cat.Context.ROOT));
             ContextManager.getCorrelationContext().put(Cat.Context.PARENT, catContext.getProperty(Cat.Context.PARENT));
