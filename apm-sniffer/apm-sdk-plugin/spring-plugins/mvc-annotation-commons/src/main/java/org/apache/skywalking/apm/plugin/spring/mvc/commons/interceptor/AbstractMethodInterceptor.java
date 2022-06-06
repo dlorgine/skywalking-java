@@ -112,7 +112,7 @@ public abstract class AbstractMethodInterceptor implements InstanceMethodsAround
                     String pattern = (String)httpServletRequest.getAttribute(org.springframework.web.servlet.HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
                     if(StringUtil.isNotEmpty(pattern)){
                       //Tags.URL_SCHEMA.set(span,pattern);
-                      addRespHeader(pattern);
+                      addRespHeader(pattern,span);
                     }
                     Tags.HTTP.METHOD.set(span, httpServletRequest.getMethod());
                     span.setComponent(ComponentsDefine.SPRING_MVC_ANNOTATION);
@@ -163,9 +163,11 @@ public abstract class AbstractMethodInterceptor implements InstanceMethodsAround
         }
     }
 
-    private void addRespHeader(String pattern) {
+    private void addRespHeader(String pattern,AbstractSpan span) {
         Object response = ContextManager.getRuntimeContext().get(RESPONSE_KEY_IN_RUNTIME_CONTEXT);
         try{
+            Tags.DOMAIN_NAME.set(span,Cat.getManager().getDomain());
+            Tags.URL_SCHEMA.set(span,pattern);
             ((HttpServletResponse)response).addHeader(Tags.URL_SCHEMA.key(),pattern);
             ((HttpServletResponse)response).addHeader(Tags.DOMAIN_NAME.key(), Cat.getManager().getDomain());
         }catch (Throwable e){

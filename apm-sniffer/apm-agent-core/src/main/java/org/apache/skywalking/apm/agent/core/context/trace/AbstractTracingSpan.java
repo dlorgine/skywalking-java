@@ -185,7 +185,8 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
     private String getExitName(UrlSchema urlSchema) {
         if(StringUtil.isNotEmpty(urlSchema.url)&&!urlSchema.url.endsWith(urlSchema.schema)&&urlSchema.url.startsWith("http")){
             try {
-                return urlSchema.url.substring(0,urlSchema.url.indexOf('/',10))+"/"+urlSchema.schema;
+                String url= urlSchema.url.substring(0,urlSchema.url.indexOf('/',10))+urlSchema.schema;
+                return url+"("+urlSchema.domain+")";
             }catch (Throwable e){}
         }
         return urlSchema.url;
