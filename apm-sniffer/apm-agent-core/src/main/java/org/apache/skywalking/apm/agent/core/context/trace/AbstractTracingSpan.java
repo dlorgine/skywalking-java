@@ -165,10 +165,13 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
                 defaultTransaction.setType(getSpanType().name()+":"+ OfficialComponent.getName(componentId));
                 UrlSchema urlSchema=getSchema();
                 if(StringUtil.isNotEmpty(urlSchema.schema)){
-                   defaultTransaction.setName(urlSchema.schema);
-                   if(!urlSchema.url.equals(urlSchema.schema)){
-                       defaultTransaction.addData("orign-url",urlSchema.url);
-                   }
+                    if(isEntry()){
+                       defaultTransaction.setName(urlSchema.schema);
+                    }else if(isExit()){
+                        defaultTransaction.setName(getExitName(urlSchema));
+                        defaultTransaction.addData("orign-url",urlSchema.url);
+
+                    }
                 }else {
                     defaultTransaction.setName(urlSchema.url);
                 }
@@ -178,9 +181,20 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
         }
         return true;
     }
+
+    private String getExitName(UrlSchema urlSchema) {
+        if(StringUtil.isNotEmpty(urlSchema.url)&&!urlSchema.url.endsWith(urlSchema.schema)&&urlSchema.url.startsWith("http")){
+            try {
+                return urlSchema.url.substring(0,urlSchema.url.indexOf('/',10))+"/"+urlSchema.schema;
+            }catch (Throwable e){}
+        }
+        return urlSchema.url;
+    }
+
     public static class UrlSchema{
         public String url;
         public String schema;
+        public String domain;
     }
     private UrlSchema getSchema(){
         UrlSchema urlSchema=new UrlSchema();
@@ -196,6 +210,9 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
             }
             else if( Tags.URL_SCHEMA.key().equalsIgnoreCase(keyStringValuePair.getKey().key())){
                 parrtern=keyStringValuePair.getValue();
+            }
+            else if( Tags.DOMAIN_NAME.key().equalsIgnoreCase(keyStringValuePair.getKey().key())){
+                urlSchema.domain=keyStringValuePair.getValue();
             }
         }
         if(StringUtil.isNotEmpty(parrtern)){
