@@ -31,7 +31,7 @@ public class SpringInterceptor implements InstanceMethodsAroundInterceptor {
             EnhancedInstance objInst, Method method, Object[] allArguments, Class<?>[] argumentsTypes, Object ret
     ) throws Throwable {
         ConfigurableEnvironment environment = (ConfigurableEnvironment) ret;
-        String domainName = environment.getProperty("cat.app.name", environment.getProperty("spring.application.name"));
+        String domainName = environment.getProperty("cat.app.name", environment.getProperty("spring.application.name",environment.getProperty("application.name")));
         System.setProperty("spring.application.name", domainName);
         String catIps = environment.getProperty(keyIps);
         String tcpPort = environment.getProperty(keyTcpPort, "2280");

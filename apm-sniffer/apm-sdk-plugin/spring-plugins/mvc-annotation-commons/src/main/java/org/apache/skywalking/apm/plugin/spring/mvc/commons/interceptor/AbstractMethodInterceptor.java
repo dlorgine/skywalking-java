@@ -111,7 +111,7 @@ public abstract class AbstractMethodInterceptor implements InstanceMethodsAround
                     Tags.URL.set(span, httpServletRequest.getRequestURL().toString());
                     String pattern = (String)httpServletRequest.getAttribute(org.springframework.web.servlet.HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
                     if(StringUtil.isNotEmpty(pattern)){
-                      Tags.URL_SCHEMA.set(span,pattern);
+                      //Tags.URL_SCHEMA.set(span,pattern);
                       addRespHeader(pattern);
                     }
                     Tags.HTTP.METHOD.set(span, httpServletRequest.getMethod());

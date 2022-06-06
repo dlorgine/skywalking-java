@@ -98,7 +98,12 @@ public class HttpClientExecuteInterceptor implements InstanceMethodsAroundInterc
                 if (!HttpClientPluginConfig.Plugin.HttpClient.COLLECT_HTTP_PARAMS && span.isProfiling()) {
                     collectHttpParam(httpRequest, span);
                 }
+                if(response.getHeaders(Tags.URL_SCHEMA.key()).length>0){
+                    Tags.URL_SCHEMA.set(span,response.getHeaders(Tags.URL_SCHEMA.key())[0].getValue());
+                    Tags.DOMAIN_NAME.set(span,response.getHeaders(Tags.DOMAIN_NAME.key())[0].getValue());
+                }
             }
+
         }
 
         ContextManager.stopSpan();

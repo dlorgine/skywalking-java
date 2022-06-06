@@ -35,6 +35,7 @@ import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.InstanceC
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.InstanceMethodsAroundInterceptor;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.MethodInterceptResult;
 import org.apache.skywalking.apm.network.trace.component.ComponentsDefine;
+import org.apache.skywalking.apm.util.StringUtil;
 
 /**
  * {@link RealCallInterceptor} intercept the synchronous http calls by the discovery of okhttp.
@@ -106,6 +107,10 @@ public class RealCallInterceptor implements InstanceMethodsAroundInterceptor, In
             if (statusCode >= 400) {
                 span.errorOccurred();
                 Tags.HTTP_RESPONSE_STATUS_CODE.set(span, statusCode);
+            }
+            if(StringUtil.isNotEmpty(response.headers().get(Tags.URL_SCHEMA.key()))){
+                Tags.URL_SCHEMA.set(span,response.headers().get(Tags.URL_SCHEMA.key()));
+                Tags.DOMAIN_NAME.set(span,response.headers().get(Tags.DOMAIN_NAME.key()));
             }
         }
 

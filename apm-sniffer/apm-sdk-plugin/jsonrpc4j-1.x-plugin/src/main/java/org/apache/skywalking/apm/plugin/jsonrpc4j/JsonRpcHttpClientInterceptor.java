@@ -61,7 +61,7 @@ public class JsonRpcHttpClientInterceptor implements InstanceMethodsAroundInterc
         AbstractSpan span = ContextManager.createExitSpan(operationName, new ContextCarrier(), clientDto.getServiceUrl().getHost() + ":" + clientDto.getPort());
         span.setComponent(ComponentsDefine.JSON_RPC);
         Tags.HTTP.METHOD.set(span, "POST");
-        Tags.URL.set(span, clientDto.getServiceUrlString());
+        Tags.URL.set(span, clientDto.getServiceUrlString()+"-"+methodName);
         SpanLayer.asRPCFramework(span);
     }
 
