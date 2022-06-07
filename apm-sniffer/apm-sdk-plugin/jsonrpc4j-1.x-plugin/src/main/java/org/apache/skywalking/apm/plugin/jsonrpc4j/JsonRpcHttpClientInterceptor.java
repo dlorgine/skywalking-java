@@ -18,6 +18,8 @@
 
 package org.apache.skywalking.apm.plugin.jsonrpc4j;
 
+import java.util.Map;
+import org.apache.skywalking.apm.agent.core.context.CarrierItem;
 import org.apache.skywalking.apm.agent.core.context.ContextCarrier;
 import org.apache.skywalking.apm.agent.core.context.ContextManager;
 import org.apache.skywalking.apm.agent.core.context.tag.Tags;
@@ -58,11 +60,19 @@ public class JsonRpcHttpClientInterceptor implements InstanceMethodsAroundInterc
         JsonRpcPeerInfo clientDto = (JsonRpcPeerInfo) objInst.getSkyWalkingDynamicField();
         String methodName = objects[0].toString();
         String operationName = clientDto.getServiceUrl().getPath() + "." + methodName;
-        AbstractSpan span = ContextManager.createExitSpan(operationName, new ContextCarrier(), clientDto.getServiceUrl().getHost() + ":" + clientDto.getPort());
+        final ContextCarrier contextCarrier = new ContextCarrier();
+        AbstractSpan span = ContextManager.createExitSpan(operationName, contextCarrier, clientDto.getServiceUrl().getHost() + ":" + clientDto.getPort());
         span.setComponent(ComponentsDefine.JSON_RPC);
         Tags.HTTP.METHOD.set(span, "POST");
-        Tags.URL.set(span, clientDto.getServiceUrlString()+"-"+methodName);
+        Tags.URL.set(span, clientDto.getServiceUrlString()+"/"+methodName);
         SpanLayer.asRPCFramework(span);
+        try{
+        Map<String, String> headers=(Map<String, String>)objects[3];
+        CarrierItem next = contextCarrier.items();
+        while (next.hasNext()) {
+            next = next.next();
+            headers.put(next.getHeadKey(), next.getHeadValue());
+        }}catch (Throwable e){}
     }
 
     @Override

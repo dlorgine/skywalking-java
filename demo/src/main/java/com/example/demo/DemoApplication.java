@@ -4,6 +4,7 @@ import com.dianping.cat.proxy.Tracer;
 import com.dianping.cat.proxy.spi.Transaction;
 import java.lang.reflect.Method;
 import java.net.URL;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.util.ClassUtils;
@@ -14,6 +15,9 @@ import org.springframework.web.client.RestTemplate;
 @SpringBootApplication
 @RestController
 public class DemoApplication {
+
+    @Autowired
+    private ExampleClientAPI exampleClientAPI;
 
     //-javaagent:/Users/chenyanli/Documents/airwallex/github/skywalking-java/skywalking-agent/skywalking-agent.jar
     @RequestMapping("/test")
@@ -28,6 +32,21 @@ public class DemoApplication {
 			t.complete();
 		}
         return "test";
+    }
+
+    @RequestMapping("/json")
+    public String jsonrpc() {
+        Transaction t = Tracer.newTransaction("URL", "json");
+        String rs="";
+        try {
+            rs=exampleClientAPI.multiplier(1,3)+"";
+            t.setStatus(Transaction.SUCCESS);
+        }catch (Throwable e){
+            t.setStatus(e);
+        }finally {
+            t.complete();
+        }
+        return rs;
     }
 
     @RequestMapping("/error1")
@@ -82,6 +101,8 @@ public class DemoApplication {
     public static void main(String[] args) throws InterruptedException {
        // Thread.sleep(20_000L);
         //Method method=getMethod(Thread.currentThread().getContextClassLoader());
+        String url="http://bla.com:8080/fsfsfsfsf";
+        System.out.println(url.substring(0,url.indexOf('/',10)));
 		SpringApplication.run(DemoApplication.class, args);
     }
 

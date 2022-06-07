@@ -81,7 +81,7 @@ public class JsonRpcHttpClientInstrumentation extends ClassInstanceMethodsEnhanc
 
                     @Override
                     public boolean isOverrideArgs() {
-                        return false;
+                        return true;
                     }
                 },
                 new InstanceMethodsInterceptPoint() {

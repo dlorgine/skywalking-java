@@ -172,7 +172,13 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
                         defaultTransaction.addData("orign-url",urlSchema.url);
 
                     }
-                }else {
+                }else if(isExit()){
+                    defaultTransaction.setName(getExitName(urlSchema));
+                    if(!urlSchema.flag){
+                      defaultTransaction.addData("orign-url",urlSchema.url);
+                    }
+                }
+                else {
                     defaultTransaction.setName(urlSchema.url);
                 }
 
@@ -183,12 +189,15 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
     }
 
     private String getExitName(UrlSchema urlSchema) {
-        if(StringUtil.isNotEmpty(urlSchema.url)&&!urlSchema.url.endsWith(urlSchema.schema)&&urlSchema.url.startsWith("http")){
-            try {
-                String url= urlSchema.url.substring(0,urlSchema.url.indexOf('/',10))+urlSchema.schema;
-                return url+"("+urlSchema.domain+")";
-            }catch (Throwable e){}
-        }
+        try {
+            if (StringUtil.isNotEmpty(urlSchema.url) && urlSchema.url.startsWith("http")) {
+                if (StringUtil.isNotEmpty(urlSchema.schema)) {
+                    String url = urlSchema.url.substring(0, urlSchema.url.indexOf('/', 10)) + urlSchema.schema;
+                    return url + "(" + urlSchema.domain + ")";
+                }
+            }
+        } catch (Throwable e) {}
+        urlSchema.flag=true;
         return urlSchema.url;
     }
 
@@ -196,6 +205,7 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
         public String url;
         public String schema;
         public String domain;
+        public boolean flag=false;
     }
     private UrlSchema getSchema(){
         UrlSchema urlSchema=new UrlSchema();

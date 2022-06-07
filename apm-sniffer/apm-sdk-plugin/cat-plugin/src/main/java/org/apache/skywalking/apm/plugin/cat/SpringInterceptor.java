@@ -41,10 +41,7 @@ public class SpringInterceptor implements InstanceMethodsAroundInterceptor {
                 && StringUtil.isNotEmpty(catIps)) {
             System.out.println("Trying to initialize CAT with " + keyCatEnabled);
             initialize(domainName, tcpPort, httpPort, catIps);
-        } else {
-            System.out.println("CAT is DISABLED explicitly. use ${cat.enabled} to turn on.");
         }
-
         return ret;
     }
 
