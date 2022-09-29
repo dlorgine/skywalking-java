@@ -67,7 +67,7 @@ public class SpringInterceptor implements InstanceMethodsAroundInterceptor {
                 } catch (Throwable ee) {}
             }
             String template="<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-                    "<config mode=\"client\">\n" +
+                    "<config mode=\"client\" domain=\"client1\">\n" +
                     "    <servers>\n" +
                     "        serverLst\n" +
                     "    </servers>\n" +
@@ -77,7 +77,7 @@ public class SpringInterceptor implements InstanceMethodsAroundInterceptor {
             for(String p: catIps.trim().split(",")){
                 rs.append(String.format(serverTemplte,p,tcpPort,httpPort));
             }
-            template=template.replace("client",domain).replace("serverLst",rs.toString());
+            template=template.replace("client1",domain).replace("serverLst",rs.toString());
             System.setProperty(Cat.CLIENT_CONFIG,template);
             //ClientConfig clientConfig=new ClientConfigBuilder().build(domain,Integer.parseInt(tcpPort),Integer.parseInt(httpPort),catIps.trim().split(","));
 
