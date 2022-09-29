@@ -17,5 +17,4 @@
 springbootloader=org.apache.skywalking.apm.plugin.cat.define.SpringBootInstrumentation
 springbootloader=org.apache.skywalking.apm.plugin.cat.define.CatNameInstrumentation
 springbootloader=org.apache.skywalking.apm.plugin.cat.define.CatStatusInstrumentation
-
-
+springbootloader=org.apache.skywalking.apm.plugin.cat.define.LogslfjInstrumentation

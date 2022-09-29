@@ -67,8 +67,8 @@
         <module>kafka-plugin</module>
 <!--        <module>servicecomb-plugin</module>-->
         <module>hystrix-1.x-plugin</module>
-        <module>sofarpc-plugin</module>
-        <module>activemq-5.x-plugin</module>
+<!--        <module>sofarpc-plugin</module>-->
+<!--        <module>activemq-5.x-plugin</module>-->
         <module>elasticsearch-5.x-plugin</module>
         <module>elasticsearch-6.x-plugin</module>
         <module>elasticsearch-7.x-plugin</module>
@@ -81,7 +81,7 @@
 <!--        <module>dubbo-3.x-plugin</module>-->
 <!--        <module>dubbo-3.x-conflict-patch</module>-->
 <!--        <module>vertx-plugins</module>-->
-        <module>resteasy-plugin</module>
+<!--        <module>resteasy-plugin</module>-->
 <!--        <module>solrj-7.x-plugin</module>-->
 <!--        <module>cassandra-java-driver-3.x-plugin</module>-->
 <!--        <module>light4j-plugins</module>-->
@@ -110,7 +110,7 @@
         <module>mssql-jdbc-plugin</module>
 <!--        <module>cxf-3.x-plugin</module>-->
         <module>jsonrpc4j-1.x-plugin</module>
-        <module>neo4j-4.x-plugin</module>
+<!--        <module>neo4j-4.x-plugin</module>-->
         <module>shardingsphere-plugins</module>
         <module>druid-1.x-plugin</module>
         <module>hikaricp-3.x-4.x-plugin</module>
