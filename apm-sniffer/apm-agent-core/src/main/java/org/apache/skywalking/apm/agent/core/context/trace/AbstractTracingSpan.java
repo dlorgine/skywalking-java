@@ -21,7 +21,6 @@ package org.apache.skywalking.apm.agent.core.context.trace;
 import com.dianping.cat.Cat;
 import com.dianping.cat.message.Transaction;
 import com.dianping.cat.message.internal.DefaultTransaction;
-import com.sun.tools.javac.util.Pair;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.LinkedList;

@@ -8,6 +8,9 @@ import static org.apache.skywalking.apm.plugin.cat.CatConfig.keyTcpPort;
 import com.dianping.cat.Cat;
 import java.io.File;
 import java.lang.reflect.Method;
+
+import com.dianping.cat.configuration.client.entity.ClientConfig;
+import com.dianping.cat.configuration.client.entity.Server;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.EnhancedInstance;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.InstanceMethodsAroundInterceptor;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.MethodInterceptResult;
@@ -63,14 +66,22 @@ public class SpringInterceptor implements InstanceMethodsAroundInterceptor {
                     System.setProperty("CAT_HOME", catHome.getAbsolutePath());
                 } catch (Throwable ee) {}
             }
+            String template="<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+                    "<config mode=\"client\">\n" +
+                    "    <servers>\n" +
+                    "        serverLst\n" +
+                    "    </servers>\n" +
+                    "</config>";
+            String serverTemplte="        <server ip=\"%s\" port=\"%s\" http-port=\"%s\"/>";
+            StringBuilder rs=new StringBuilder();
+            for(String p: catIps.trim().split(",")){
+                rs.append(String.format(serverTemplte,p,tcpPort,httpPort));
+            }
+            template=template.replace("client",domain).replace("serverLst",rs.toString());
+            System.setProperty(Cat.CLIENT_CONFIG,template);
+            //ClientConfig clientConfig=new ClientConfigBuilder().build(domain,Integer.parseInt(tcpPort),Integer.parseInt(httpPort),catIps.trim().split(","));
 
 
-            Cat.getBootstrap()
-                    .initializeByDomain(domain,
-                            Integer.parseInt(tcpPort),
-                            Integer.parseInt(httpPort),
-                            catIps.trim().split(",")
-                    );
         }
     }
 
@@ -79,5 +90,21 @@ public class SpringInterceptor implements InstanceMethodsAroundInterceptor {
             EnhancedInstance objInst, Method method, Object[] allArguments, Class<?>[] argumentsTypes, Throwable t
     ) {
 
+    }
+
+    private static class ClientConfigBuilder {
+        public ClientConfig build(String domain, int tcpPort, int httpPort, String[] servers) {
+            ClientConfig config = new ClientConfig();
+
+            if (domain != null) {
+                config.setDomain(domain);
+            }
+
+            for (String server : servers) {
+                config.addServer(new Server(server).setPort(tcpPort).setHttpPort(httpPort));
+            }
+
+            return config;
+        }
     }
 }
