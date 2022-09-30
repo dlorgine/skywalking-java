@@ -21,12 +21,14 @@ package org.apache.skywalking.apm.agent.core.context.trace;
 import com.dianping.cat.Cat;
 import com.dianping.cat.message.Transaction;
 import com.dianping.cat.message.internal.DefaultTransaction;
+
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
 import org.apache.skywalking.apm.agent.core.boot.ServiceManager;
 import org.apache.skywalking.apm.agent.core.cat.CatContext;
 import org.apache.skywalking.apm.agent.core.conf.Config;
@@ -159,25 +161,24 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
             if (!errorOccurred) {
                 transcation.setStatus(Transaction.SUCCESS);
             }
-            if(transcation instanceof DefaultTransaction){
-                DefaultTransaction defaultTransaction=  (DefaultTransaction)transcation;
-                defaultTransaction.setType(getSpanType().name()+":"+ OfficialComponent.getName(componentId));
-                UrlSchema urlSchema=getSchema();
-                if(StringUtil.isNotEmpty(urlSchema.schema)){
-                    if(isEntry()){
-                       defaultTransaction.setName(urlSchema.schema);
-                    }else if(isExit()){
+            if (transcation instanceof DefaultTransaction) {
+                DefaultTransaction defaultTransaction = (DefaultTransaction) transcation;
+                defaultTransaction.setType(getSpanType().name() + ":" + OfficialComponent.getName(componentId));
+                UrlSchema urlSchema = getSchema();
+                if (StringUtil.isNotEmpty(urlSchema.schema)) {
+                    if (isEntry()) {
+                        defaultTransaction.setName(urlSchema.schema);
+                    } else if (isExit()) {
                         defaultTransaction.setName(getExitName(urlSchema));
-                        defaultTransaction.addData("orign-url",urlSchema.url);
+                        defaultTransaction.addData("orign-url", urlSchema.url);
 
                     }
-                }else if(isExit()){
+                } else if (isExit()) {
                     defaultTransaction.setName(getExitName(urlSchema));
-                    if(!urlSchema.flag){
-                      defaultTransaction.addData("orign-url",urlSchema.url);
+                    if (!urlSchema.flag) {
+                        defaultTransaction.addData("orign-url", urlSchema.url);
                     }
-                }
-                else {
+                } else {
                     defaultTransaction.setName(urlSchema.url);
                 }
 
@@ -195,42 +196,44 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
                     return url + "(" + urlSchema.domain + ")";
                 }
             }
-        } catch (Throwable e) {}
-        urlSchema.flag=true;
+        } catch (Throwable e) {
+        }
+        urlSchema.flag = true;
         return urlSchema.url;
     }
 
-    public static class UrlSchema{
+    public static class UrlSchema {
         public String url;
         public String schema;
         public String domain;
-        public boolean flag=false;
+        public boolean flag = false;
     }
-    private UrlSchema getSchema(){
-        UrlSchema urlSchema=new UrlSchema();
-        String url="";
-        String method="";
-        String parrtern="";
-        for (TagValuePair keyStringValuePair: tags) {
-            if( Tags.URL.key().equalsIgnoreCase(keyStringValuePair.getKey().key())){
-                url=keyStringValuePair.getValue();
-            }
-            else if( Tags.HTTP.METHOD.key().equalsIgnoreCase(keyStringValuePair.getKey().key())){
-                method=keyStringValuePair.getValue();
-            }
-            else if( Tags.URL_SCHEMA.key().equalsIgnoreCase(keyStringValuePair.getKey().key())){
-                parrtern=keyStringValuePair.getValue();
-            }
-            else if( Tags.DOMAIN_NAME.key().equalsIgnoreCase(keyStringValuePair.getKey().key())){
-                urlSchema.domain=keyStringValuePair.getValue();
+
+    private UrlSchema getSchema() {
+        UrlSchema urlSchema = new UrlSchema();
+        String url = "";
+        String method = "";
+        String parrtern = "";
+        for (TagValuePair keyStringValuePair : tags) {
+            if (Tags.URL.key().equalsIgnoreCase(keyStringValuePair.getKey().key())) {
+                url = keyStringValuePair.getValue();
+            } else if (Tags.HTTP.METHOD.key().equalsIgnoreCase(keyStringValuePair.getKey().key())) {
+                method = keyStringValuePair.getValue();
+            } else if (Tags.URL_SCHEMA.key().equalsIgnoreCase(keyStringValuePair.getKey().key())) {
+                parrtern = keyStringValuePair.getValue();
+                if (parrtern.indexOf("?") != -1) {
+                    parrtern = parrtern.substring(0, parrtern.indexOf("?"));
+                }
+            } else if (Tags.DOMAIN_NAME.key().equalsIgnoreCase(keyStringValuePair.getKey().key())) {
+                urlSchema.domain = keyStringValuePair.getValue();
             }
         }
-        if(StringUtil.isNotEmpty(parrtern)){
-            urlSchema.schema=parrtern+":"+method;
+        if (StringUtil.isNotEmpty(parrtern)) {
+            urlSchema.schema = parrtern + ":" + method;
         }
-        if(url.length()==0){
-            urlSchema.url= getOperationName();
-        }else{
+        if (url.length() == 0) {
+            urlSchema.url = getOperationName();
+        } else {
             if (isEntry()) {
                 try {
                     URL url1 = new URL(url);
@@ -244,15 +247,17 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
         }
         return urlSchema;
     }
+
     @Override
     public AbstractTracingSpan start() {
         this.startTime = System.currentTimeMillis();
         addCat();
-        transcation= Cat.newTransaction(getOperationName(),"");
+        transcation = Cat.newTransaction(getOperationName(), "");
         return this;
     }
-    private void addCat(){
-        if(isExit()) {
+
+    private void addCat() {
+        if (isExit()) {
             CatContext catContext = new CatContext();
             Cat.logRemoteCallClient(catContext, Cat.getManager().getDomain());
             ContextManager.getCorrelationContext().put(Cat.Context.ROOT, catContext.getProperty(Cat.Context.ROOT));
@@ -277,13 +282,13 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
             errorOccurred();
         }
         logs.add(new LogDataEntity.Builder().add(new KeyValuePair("event", "error"))
-                                            .add(new KeyValuePair("error.kind", t.getClass().getName()))
-                                            .add(new KeyValuePair("message", t.getMessage()))
-                                            .add(new KeyValuePair(
-                                                "stack",
-                                                ThrowableTransformer.INSTANCE.convert2String(t, 4000)
-                                            ))
-                                            .build(System.currentTimeMillis()));
+                .add(new KeyValuePair("error.kind", t.getClass().getName()))
+                .add(new KeyValuePair("message", t.getMessage()))
+                .add(new KeyValuePair(
+                        "stack",
+                        ThrowableTransformer.INSTANCE.convert2String(t, 4000)
+                ))
+                .build(System.currentTimeMillis()));
         transcation.setStatus(t);
         return this;
     }
@@ -363,7 +368,7 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
         return this;
     }
 
-    private SpanType getSpanType(){
+    private SpanType getSpanType() {
         if (isEntry()) {
             return SpanType.Entry;
         } else if (isExit()) {
@@ -372,6 +377,7 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
             return SpanType.Local;
         }
     }
+
     public SpanObject.Builder transform() {
         SpanObject.Builder spanBuilder = SpanObject.newBuilder();
 
