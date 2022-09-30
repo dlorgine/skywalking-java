@@ -74,6 +74,11 @@ public class PluginFinder {
     public List<AbstractClassEnhancePluginDefine> find(TypeDescription typeDescription) {
         List<AbstractClassEnhancePluginDefine> matchedPlugins = new LinkedList<AbstractClassEnhancePluginDefine>();
         String typeName = typeDescription.getTypeName();
+        if(typeName.startsWith("org.slf4j.")){
+            if(!"org.slf4j.LoggerFactory".equals(typeName)){
+               return matchedPlugins;
+            }
+        }
         if (nameMatchDefine.containsKey(typeName)) {
             matchedPlugins.addAll(nameMatchDefine.get(typeName));
         }

@@ -20,13 +20,16 @@ public class LogslfjInterceptor implements StaticMethodsAroundInterceptor {
     @Override
     public Object afterMethod(Class clazz, Method method, Object[] allArguments, Class<?>[] parameterTypes, Object ret) {
         try {
-            InvocationHandler retHandler = new LoggerWrapper<Logger>((Logger) ret);
-            Logger loggerProxy = (Logger) Proxy.newProxyInstance(ret.getClass().getClassLoader(), new Class<?>[]{Logger.class}, retHandler);
-            return loggerProxy;
+            if (!((Logger) ret).getName().startsWith("com.dianping.cat")) {
+                InvocationHandler retHandler = new LoggerWrapper<Logger>((Logger) ret);
+                Logger loggerProxy = (Logger) Proxy.newProxyInstance(ret.getClass().getClassLoader(), new Class<?>[]{Logger.class}, retHandler);
+                return loggerProxy;
+            }
         } catch (Throwable ex) {
             ex.printStackTrace();
             return ret;
         }
+        return ret;
     }
 
     @Override
