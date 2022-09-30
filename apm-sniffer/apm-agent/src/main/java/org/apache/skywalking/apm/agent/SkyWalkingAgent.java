@@ -98,7 +98,7 @@ public class SkyWalkingAgent {
 
         AgentBuilder agentBuilder = new AgentBuilder.Default(byteBuddy).ignore(
                 nameStartsWith("net.bytebuddy.")
-                        .or(nameStartsWith("org.slf4j."))
+                        //.or(nameStartsWith("org.slf4j."))
                         .or(nameStartsWith("org.groovy."))
                         .or(nameContains("javassist"))
                         .or(nameContains(".asm."))
