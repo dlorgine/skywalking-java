@@ -27,7 +27,7 @@ public class LogslfjInterceptor implements StaticMethodsAroundInterceptor {
         return ignoreNames;
     }
     private boolean ignoreLog(String name){
-        if(name.startsWith("org.")){
+        if(name.startsWith("org.")||name.startsWith("_org")){
             return true;
         }
         if(name.startsWith("com.dianping.cat")){

@@ -2,6 +2,7 @@ package org.apache.skywalking.apm.plugin.cat.define;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.matcher.ElementMatcher;
+import org.apache.skywalking.apm.agent.core.plugin.bytebuddy.ArgumentTypeNameMatch;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.ConstructorInterceptPoint;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.InstanceMethodsInterceptPoint;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.StaticMethodsInterceptPoint;
@@ -40,7 +41,7 @@ public class LogslfjInstrumentation extends ClassStaticMethodsEnhancePluginDefin
                 new StaticMethodsInterceptPoint() {
                     @Override
                     public ElementMatcher<MethodDescription> getMethodsMatcher() {
-                        return named("getLogger");
+                        return named("getLogger").and(ArgumentTypeNameMatch.takesArgumentWithType(0,String.class.getTypeName()));
                     }
 
                     @Override
