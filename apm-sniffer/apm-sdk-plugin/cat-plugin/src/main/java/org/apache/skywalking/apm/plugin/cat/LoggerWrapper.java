@@ -27,7 +27,7 @@ public class LoggerWrapper<T> implements InvocationHandler {
         String methodName = method.getName();
         try {
             //代理过程中插入其他操作
-            if (method.getName().indexOf("error") != -1 || method.getName().indexOf("info") != -1 || method.getName().indexOf("warn") != -1 && method.getName().indexOf("debug") != -1) {
+            if ("error".equalsIgnoreCase(methodName)||"warn".equalsIgnoreCase(methodName)||"info".equalsIgnoreCase(methodName)||"debug".equalsIgnoreCase(methodName)) {
                 //MDC.put("catTraceId", Cat.getCurrentMessageId());
                 String traceId = Cat.getCurrentMessageId();
                 if (StringUtil.isNotEmpty(traceId)) {
@@ -37,7 +37,7 @@ public class LoggerWrapper<T> implements InvocationHandler {
                         args[1] = "catTraceId:" + Cat.getCurrentMessageId() + "," + args[1].toString();
                     }
                 }
-                if (methodName.indexOf("error") != -1) {
+                if ("error".equalsIgnoreCase(methodName)) {
                     if (args.length > 1) {
                         if (args[0] instanceof String && args[1] instanceof Throwable) {
                             Cat.logError(args[0].toString(), (Throwable) args[1]);
