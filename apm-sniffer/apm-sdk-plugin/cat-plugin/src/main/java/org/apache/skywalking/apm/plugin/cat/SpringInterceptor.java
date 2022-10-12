@@ -84,7 +84,7 @@ public class SpringInterceptor implements InstanceMethodsAroundInterceptor {
 
             //ClientConfig clientConfig=new ClientConfigBuilder().build(domain,Integer.parseInt(tcpPort),Integer.parseInt(httpPort),catIps.trim().split(","));
             System.out.println("set cat config:"+template);
-            //Cat.enable();
+            Cat.enable();
             CAT_INIT=true;
         }
     }
