@@ -21,14 +21,6 @@ package org.apache.skywalking.apm.agent.core.context.trace;
 import com.dianping.cat.Cat;
 import com.dianping.cat.message.Transaction;
 import com.dianping.cat.message.internal.DefaultTransaction;
-
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 import org.apache.skywalking.apm.agent.core.boot.ServiceManager;
 import org.apache.skywalking.apm.agent.core.cat.CatContext;
 import org.apache.skywalking.apm.agent.core.conf.Config;
@@ -46,6 +38,12 @@ import org.apache.skywalking.apm.network.language.agent.v3.SpanType;
 import org.apache.skywalking.apm.network.trace.component.Component;
 import org.apache.skywalking.apm.network.trace.component.OfficialComponent;
 import org.apache.skywalking.apm.util.StringUtil;
+
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * The <code>AbstractTracingSpan</code> represents a group of {@link AbstractSpan} implementations, which belongs a real
@@ -192,8 +190,12 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
         try {
             if (StringUtil.isNotEmpty(urlSchema.url) && urlSchema.url.startsWith("http")) {
                 if (StringUtil.isNotEmpty(urlSchema.schema)) {
-                    String url = urlSchema.url.substring(0, urlSchema.url.indexOf('/', 10)) + urlSchema.schema;
-                    return url + "(" + urlSchema.domain + ")";
+                    if (StringUtil.isEmpty(urlSchema.domain)) {
+                        return urlSchema.schema;
+                    } else {
+                        String url = urlSchema.url.substring(0, urlSchema.url.indexOf('/', 10)) + urlSchema.schema;
+                        return url + "(" + urlSchema.domain + ")";
+                    }
                 }
             }
         } catch (Throwable e) {
@@ -238,11 +240,20 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
                 try {
                     URL url1 = new URL(url);
                     urlSchema.url = url1.getPath() + ":" + method;
+                    if (StringUtil.isEmpty(urlSchema.schema) && url.contains("?")) {
+                        urlSchema.schema = url1.getPath().substring(0, url1.getPath().indexOf("?")) + ":" + method;
+                    }
                 } catch (Throwable e) {
                     urlSchema.url = url + ":" + method;
+                    if (StringUtil.isEmpty(urlSchema.schema) && url.contains("?")) {
+                        urlSchema.schema = url.substring(0, url.indexOf("?")) + ":" + method;
+                    }
                 }
             } else {
                 urlSchema.url = url + ":" + method;
+                if (StringUtil.isEmpty(urlSchema.schema) && url.contains("?")) {
+                    urlSchema.schema = url.substring(0, url.indexOf("?")) + ":" + method;
+                }
             }
         }
         return urlSchema;
