@@ -21,7 +21,7 @@ public class LoggerWrapper<T> implements InvocationHandler {
     public Object invoke(Object proxy, Method method, Object[] args)
             throws Throwable {
         RuntimeContext runtimeContext = ContextManager.getRuntimeContext();
-        if (runtimeContext == null || (runtimeContext.get(IS_LOG_ENABLED) != null && "false".equalsIgnoreCase(runtimeContext.get(IS_LOG_ENABLED).toString()))) {
+        if (!SpringInterceptor.CAT_INIT || runtimeContext == null || (runtimeContext.get(IS_LOG_ENABLED) != null && "false".equalsIgnoreCase(runtimeContext.get(IS_LOG_ENABLED).toString()))) {
             return method.invoke(target, args);
         }
         String methodName = method.getName();

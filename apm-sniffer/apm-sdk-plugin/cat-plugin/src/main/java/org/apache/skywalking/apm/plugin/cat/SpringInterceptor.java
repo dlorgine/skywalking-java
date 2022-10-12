@@ -18,6 +18,8 @@ import org.apache.skywalking.apm.util.StringUtil;
 import org.springframework.core.env.ConfigurableEnvironment;
 
 public class SpringInterceptor implements InstanceMethodsAroundInterceptor {
+
+    protected static boolean CAT_INIT=false;
     @Override
     public void beforeMethod(
             EnhancedInstance objInst,
@@ -79,9 +81,11 @@ public class SpringInterceptor implements InstanceMethodsAroundInterceptor {
             }
             template=template.replace("client1",domain).replace("serverLst",rs.toString());
             System.setProperty(Cat.CLIENT_CONFIG,template);
+
             //ClientConfig clientConfig=new ClientConfigBuilder().build(domain,Integer.parseInt(tcpPort),Integer.parseInt(httpPort),catIps.trim().split(","));
-
-
+            System.out.println("set cat config:"+template);
+            //Cat.enable();
+            CAT_INIT=true;
         }
     }
 
