@@ -221,14 +221,14 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
                 method = keyStringValuePair.getValue();
             } else if (Tags.URL_SCHEMA.key().equalsIgnoreCase(keyStringValuePair.getKey().key())) {
                 parrtern = keyStringValuePair.getValue();
-                if (parrtern.indexOf("?") != -1) {
-                    parrtern = parrtern.substring(0, parrtern.indexOf("?"));
-                }
             } else if (Tags.DOMAIN_NAME.key().equalsIgnoreCase(keyStringValuePair.getKey().key())) {
                 urlSchema.domain = keyStringValuePair.getValue();
             }
         }
         if (StringUtil.isNotEmpty(parrtern)) {
+            if (parrtern.indexOf("?") != -1) {
+                parrtern = parrtern.substring(0, parrtern.indexOf("?"));
+            }
             urlSchema.schema = parrtern + ":" + method;
         }
         if (url.length() == 0) {
